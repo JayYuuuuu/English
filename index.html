@@ -290,36 +290,36 @@
             }
         }
 
-        /* 悬浮导航条的样式 */
+        /* 悬浮导航条的样式（缩小40%） */
         .floating-nav {
             position: fixed;
             bottom: 20px;
             right: 20px;
             background-color: rgba(255, 255, 255, 0.9);
             border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 5px; /* 从8px缩小到5px */
+            padding: 6px; /* 从10px缩小到6px */
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
             z-index: 1000;
         }
 
         .floating-nav h3 {
             margin: 0 0 10px 0;
-            font-size: 16px;
+            font-size: 10px; /* 从16px缩小到10px */
             text-align: center;
         }
 
         .floating-nav a {
             display: block;
             margin: 5px 0;
-            padding: 6px 10px;
+            padding: 4px 6px; /* 从6px 10px缩小到4px 6px */
             background-color: #007bff;
             color: #fff;
             text-align: center;
             border-radius: 4px;
             text-decoration: none;
             transition: background-color 0.3s;
-            font-size: 14px;
+            font-size: 8px; /* 从14px缩小到8px */
         }
 
         .floating-nav a:hover {
@@ -331,17 +331,17 @@
             .floating-nav {
                 bottom: 10px;
                 right: 10px;
-                padding: 8px;
+                padding: 4px; /* 从8px缩小到4px */
             }
 
             .floating-nav h3 {
-                font-size: 14px;
+                font-size: 8px; /* 从14px缩小到8px */
                 margin-bottom: 8px;
             }
 
             .floating-nav a {
-                font-size: 12px;
-                padding: 5px 8px;
+                font-size: 6px; /* 从12px缩小到6px */
+                padding: 3px 5px; /* 从5px 8px缩小到3px 5px */
             }
         }
     </style>
