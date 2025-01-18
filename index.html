@@ -4,6 +4,15 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>2025春译林版英语七年级下册单词</title>
+        
+        <!-- Open Graph Meta Tags -->
+        <meta property="og:title" content="2025春译林版英语七年级下册单词学习" />
+        <meta property="og:description" content="一个便捷的单词学习网页，包含七年级下册 Units 1~8 的常见单词，支持标记掌握、朗读功能和实时搜索。" />
+        <meta property="og:image" content="https://your-domain.com/path-to-your-image.jpg" />
+        <meta property="og:url" content="https://your-domain.com/your-page.html" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="英语单词学习" />
+
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -63,6 +72,7 @@
                 margin: 10px 20px;
                 font-size: 16px;
                 text-align: center;
+                font-weight: bold;
             }
 
             /* 单元的样式 */
@@ -87,8 +97,8 @@
 
             /* 单词卡片的样式 */
             .word-cell {
-                flex: 1 1 150px; /* 允许卡片在容器中灵活伸缩，初始宽度为150px */
-                max-width: 200px; /* 设置最大宽度 */
+                flex: 1 1 45%; /* 允许卡片在容器中灵活伸缩，初始宽度为45% */
+                max-width: 45%; /* 设置最大宽度为45%，实现两列布局 */
                 height: auto; /* 高度自动，根据内容调整 */
                 
                 margin: 5px;
@@ -180,9 +190,9 @@
                 }
 
                 .word-cell {
-                    flex: 1 1 100%; /* 卡片占满整个行 */
-                    max-width: 100%;
-                    margin: 5px 0;
+                    flex: 1 1 45%; /* 改为45%，实现两列布局 */
+                    max-width: 45%;
+                    margin: 5px;
                 }
 
                 .btn-row {
@@ -290,7 +300,7 @@
         <p>本页面提供了七年级下册 Units 1~8 的常见单词，点击相应的“标记掌握”按钮，可以将单词记录到本地并将卡片变为绿色，再次点击可取消标记。</p>
         <p>点击“朗读”按钮会用英式发音（<code>en-GB</code>）朗读该单词。</p>
         <p>如果想查看该单词的详细读音，可以直接点击单词文本，会跳转到在线发音查询网站（<code>pronounceonline.com</code>）。</p>
-        <p>使用电脑浏览可获得完整体验，手机浏览可能会无法使用口音选择发音功能。</p>
+        <p>使用电脑浏览可获得完整体验，手机浏览也支持两列显示和朗读功能。</p>
         <div class="accent-options">
             <span>您可以自己选择朗读口音：</span>
             <label>
@@ -986,19 +996,6 @@
             implementSearch();
 
             // 更新学习进度
-            updateProgress();
-        }
-
-        // 修改 toggleWordLearned 函数，添加 updateProgress 调用
-        function toggleWordLearned(word) {
-            if (isWordLearned(word)) {
-                // 取消标记
-                learnedWords = learnedWords.filter(w => w !== word);
-            } else {
-                // 标记为已掌握
-                learnedWords.push(word);
-            }
-            localStorage.setItem('learnedWords', JSON.stringify(learnedWords));
             updateProgress();
         }
 
