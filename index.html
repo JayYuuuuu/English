@@ -289,6 +289,61 @@
                 font-size: 16px;
             }
         }
+
+        /* 悬浮导航条的样式 */
+        .floating-nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .floating-nav h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .floating-nav a {
+            display: block;
+            margin: 5px 0;
+            padding: 6px 10px;
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+
+        .floating-nav a:hover {
+            background-color: #0056b3;
+        }
+
+        /* 确保悬浮导航条在小屏幕设备上不遮挡内容 */
+        @media (max-width: 600px) {
+            .floating-nav {
+                bottom: 10px;
+                right: 10px;
+                padding: 8px;
+            }
+
+            .floating-nav h3 {
+                font-size: 14px;
+                margin-bottom: 8px;
+            }
+
+            .floating-nav a {
+                font-size: 12px;
+                padding: 5px 8px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -301,9 +356,9 @@
         <p>本页面提供了七年级下册 Units 1~8 的常见单词，点击相应的“标记掌握”按钮，可以将单词记录到本地并将卡片变为绿色，再次点击可取消标记。</p>
         <p>点击“朗读”按钮会用选定的发音（英式或美式）朗读该单词。</p>
         <p>如果想查看该单词的详细读音，可以直接点击单词文本，会跳转到在线发音查询网站（<code>pronounceonline.com</code>）。</p>
-        <p>使用电脑浏览可获得完整体验，手机浏览不支持朗读口音选择功能。</p>
+        <p>使用电脑浏览可获得完整体验，手机浏览支持两列显示和朗读功能。</p>
         <div class="accent-options">
-            <span>电脑浏览您可以自己选择朗读口音：</span>
+            <span>您可以自己选择朗读口音：</span>
             <label>
                 <input type="radio" name="accent" value="en-GB" checked />
                 英式（en-GB）
@@ -328,51 +383,64 @@
     </div>
 
     <!-- Unit 1 -->
-    <div class="unit">
+    <div class="unit" id="unit1">
         <h2>Unit 1</h2>
         <div class="table-container" id="unit1-table"></div>
     </div>
 
     <!-- Unit 2 -->
-    <div class="unit">
+    <div class="unit" id="unit2">
         <h2>Unit 2</h2>
         <div class="table-container" id="unit2-table"></div>
     </div>
 
     <!-- Unit 3 -->
-    <div class="unit">
+    <div class="unit" id="unit3">
         <h2>Unit 3</h2>
         <div class="table-container" id="unit3-table"></div>
     </div>
 
     <!-- Unit 4 -->
-    <div class="unit">
+    <div class="unit" id="unit4">
         <h2>Unit 4</h2>
         <div class="table-container" id="unit4-table"></div>
     </div>
 
     <!-- Unit 5 -->
-    <div class="unit">
+    <div class="unit" id="unit5">
         <h2>Unit 5</h2>
         <div class="table-container" id="unit5-table"></div>
     </div>
 
     <!-- Unit 6 -->
-    <div class="unit">
+    <div class="unit" id="unit6">
         <h2>Unit 6</h2>
         <div class="table-container" id="unit6-table"></div>
     </div>
 
     <!-- Unit 7 -->
-    <div class="unit">
+    <div class="unit" id="unit7">
         <h2>Unit 7</h2>
         <div class="table-container" id="unit7-table"></div>
     </div>
 
     <!-- Unit 8 -->
-    <div class="unit">
+    <div class="unit" id="unit8">
         <h2>Unit 8</h2>
         <div class="table-container" id="unit8-table"></div>
+    </div>
+
+    <!-- 悬浮导航条 -->
+    <div class="floating-nav">
+        <h3>快速导航</h3>
+        <a href="#unit1">Unit 1</a>
+        <a href="#unit2">Unit 2</a>
+        <a href="#unit3">Unit 3</a>
+        <a href="#unit4">Unit 4</a>
+        <a href="#unit5">Unit 5</a>
+        <a href="#unit6">Unit 6</a>
+        <a href="#unit7">Unit 7</a>
+        <a href="#unit8">Unit 8</a>
     </div>
 
     <script>
