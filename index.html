@@ -92,6 +92,13 @@
         .unit h2 {
             font-size: 24px;
             margin-bottom: 20px;
+            text-align: center; /* 居中标题 */
+        }
+        .unit-count {
+            display: block;
+            margin-top: 5px;
+            font-size: 16px;
+            font-weight: normal;
         }
 
         /* 单词卡片容器 */
@@ -190,6 +197,14 @@
                 padding: 10px;
             }
 
+            .unit h2 {
+                font-size: 20px;
+            }
+
+            .unit-count {
+                font-size: 14px;
+            }
+
             .word-cell {
                 flex: 1 1 48%; /* 48% 保证两列 */
                 max-width: 48%;
@@ -230,6 +245,14 @@
             .main-title {
                 font-size: 26px;
                 padding: 18px 0;
+            }
+
+            .unit h2 {
+                font-size: 22px;
+            }
+
+            .unit-count {
+                font-size: 14px;
             }
 
             .word-cell {
@@ -384,49 +407,49 @@
 
     <!-- Unit 1 -->
     <div class="unit" id="unit1">
-        <h2>Unit 1</h2>
+        <h2>Unit 1 <span class="unit-count" id="unit1-count">已掌握: 0 / 总单词: 50</span></h2>
         <div class="table-container" id="unit1-table"></div>
     </div>
 
     <!-- Unit 2 -->
     <div class="unit" id="unit2">
-        <h2>Unit 2</h2>
+        <h2>Unit 2 <span class="unit-count" id="unit2-count">已掌握: 0 / 总单词: 50</span></h2>
         <div class="table-container" id="unit2-table"></div>
     </div>
 
     <!-- Unit 3 -->
     <div class="unit" id="unit3">
-        <h2>Unit 3</h2>
+        <h2>Unit 3 <span class="unit-count" id="unit3-count">已掌握: 0 / 总单词: 50</span></h2>
         <div class="table-container" id="unit3-table"></div>
     </div>
 
     <!-- Unit 4 -->
     <div class="unit" id="unit4">
-        <h2>Unit 4</h2>
+        <h2>Unit 4 <span class="unit-count" id="unit4-count">已掌握: 0 / 总单词: 50</span></h2>
         <div class="table-container" id="unit4-table"></div>
     </div>
 
     <!-- Unit 5 -->
     <div class="unit" id="unit5">
-        <h2>Unit 5</h2>
+        <h2>Unit 5 <span class="unit-count" id="unit5-count">已掌握: 0 / 总单词: 50</span></h2>
         <div class="table-container" id="unit5-table"></div>
     </div>
 
     <!-- Unit 6 -->
     <div class="unit" id="unit6">
-        <h2>Unit 6</h2>
+        <h2>Unit 6 <span class="unit-count" id="unit6-count">已掌握: 0 / 总单词: 50</span></h2>
         <div class="table-container" id="unit6-table"></div>
     </div>
 
     <!-- Unit 7 -->
     <div class="unit" id="unit7">
-        <h2>Unit 7</h2>
+        <h2>Unit 7 <span class="unit-count" id="unit7-count">已掌握: 0 / 总单词: 50</span></h2>
         <div class="table-container" id="unit7-table"></div>
     </div>
 
     <!-- Unit 8 -->
     <div class="unit" id="unit8">
-        <h2>Unit 8</h2>
+        <h2>Unit 8 <span class="unit-count" id="unit8-count">已掌握: 0 / 总单词: 50</span></h2>
         <div class="table-container" id="unit8-table"></div>
     </div>
 
@@ -451,6 +474,7 @@
           4. 用户可在“英式 / 美式”间切换发音
           5. 搜索功能
           6. 学习进度统计
+          7. 每个单元的学习进度显示
         */
         const units = {
             unit1: [
@@ -915,6 +939,9 @@
         // 定义一个变量存储用户选择的发音，默认 en-GB
         let currentAccent = 'en-GB';
 
+        // 用于映射每个单词到它所属的单元
+        const wordToUnit = {};
+
         function isWordLearned(word) {
             return learnedWords.includes(word);
         }
@@ -931,6 +958,10 @@
             updateProgress();
             // 重新渲染按钮文本
             renderLearnedStatus(word);
+            // 更新对应单元的学习进度
+            if (wordToUnit[word]) {
+                updateUnitCount(wordToUnit[word]);
+            }
         }
 
         // ~~~ 朗读功能：根据 currentAccent 选择英式或美式 ~~~
@@ -948,10 +979,20 @@
         // ~~~ 动态生成单词卡片：单词链接、标记按钮、朗读按钮 ~~~
         function createTable(containerId, wordList) {
             const container = document.getElementById(containerId);
+            const unitId = containerId.replace('-table', ''); // e.g., 'unit1'
+            const totalWords = wordList.length;
+
+            // 初始化单位学习进度显示
+            updateUnitCount(unitId);
+
             wordList.forEach(item => {
                 // 新建一个卡片
                 const cell = document.createElement('div');
                 cell.className = 'word-cell';
+                cell.dataset.unit = unitId; // 添加 data-unit 属性
+
+                // 映射单词到单元
+                wordToUnit[item.word] = unitId;
 
                 // 如果本地记录里已掌握，就加 learned 样式
                 if (isWordLearned(item.word)) {
@@ -1035,6 +1076,17 @@
             const totalCount = Object.values(units).reduce((acc, unit) => acc + unit.length, 0);
             document.getElementById('learned-count').textContent = `已掌握：${learnedCount}`;
             document.getElementById('total-count').textContent = `总单词：${totalCount}`;
+        }
+
+        // ~~~ 更新单个单元的学习进度 ~~~
+        function updateUnitCount(unitId) {
+            const unitWords = units[unitId];
+            const learnedInUnit = unitWords.filter(wordObj => isWordLearned(wordObj.word)).length;
+            const totalInUnit = unitWords.length;
+            const countElement = document.getElementById(`${unitId}-count`);
+            if (countElement) {
+                countElement.textContent = `已掌握: ${learnedInUnit} / 总单词: ${totalInUnit}`;
+            }
         }
 
         // ~~~ 重新渲染标记状态按钮文本 ~~~
