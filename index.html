@@ -1333,7 +1333,9 @@ async function speakText(englishWord) {
         utterance.voice = selectedVoice;
     }
     window.speechSynthesis.speak(utterance);
+    
 }
+
 
         /*
             ========== 4. 动态生成单词卡片（带朗读按钮、标记已掌握等） ==========
@@ -1896,6 +1898,10 @@ async function speakText(englishWord) {
         }
 
         window.onload = init;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            voices = await loadVoices();
+        })
     </script>
 </body>
 </html>
