@@ -53,6 +53,7 @@
 
         /* ========== 使用说明的样式 ========== */
         .usage-instructions {
+            text-align: center;
             margin: 20px;
             padding: 15px;
             background-color: #ffffff;
@@ -318,7 +319,7 @@
             border: none;
             text-align: center;
             font-size: 20px;
-            text-transform: uppercase;
+            text-transform: lowercase;
             outline: none;
             background-color: transparent;
             cursor: pointer;
@@ -659,15 +660,15 @@
 </head>
 <body>
     <!-- ================= 网页大标题 ================= -->
-    <h1 class="main-title">2025春译林版英语七年级下册单词</h1>
+    <h1 class="main-title">2025春译林英语七年级下册单词</h1>
 
     <!-- ================= 使用说明区域 ================= -->
     <div class="usage-instructions">
         <h2>页面使用说明</h2>
-        <p>本页面提供了七年级下册 Units 1~8 的常见单词。点击“朗读”按钮，可以听到单词的发音。</p>
-        <p>使用电脑浏览可获得完整体验，手机浏览支持两列显示和朗读功能。</p>
+        <p>七年级下册 Units 1~8 的常见单词。点击“朗读”按钮，可以听到单词的发音。</p>
+        <p>如需更标准的发音，点击单词可跳转英语发音网站，有单词真人发音。</p>
         <div class="accent-options">
-            <span>您可以选择朗读口音：</span>
+           
             <label for="accent-en-GB">
                 <input type="radio" id="accent-en-GB" name="accent" value="en-GB" checked aria-label="英式发音" />
                 英式（en-GB）
@@ -676,7 +677,7 @@
                 <input type="radio" id="accent-en-US" name="accent" value="en-US" aria-label="美式发音" />
                 美式（en-US）
             </label>
-            <p>来自初一39班热心家长😄</p>
+            <p>来自天一实验学校初一39班热心家长😄</p>
         </div>
 
         <!-- 添加搜索框 -->
@@ -1630,12 +1631,12 @@
             const options = generateOptions(correctLetter);
             options.forEach(option => {
                 const btn = document.createElement('button');
-                btn.textContent = option.toUpperCase();
-                btn.setAttribute('aria-label', `选择字母 ${option.toUpperCase()}`);
+                btn.textContent = option;
+                btn.setAttribute('aria-label', `选择字母 ${option.toLowerCase()}`);
                 btn.addEventListener('click', (event) => {
                     event.stopPropagation(); // 阻止事件冒泡
                     if (currentSelectedInput) {
-                        currentSelectedInput.value = option.toUpperCase();
+                        currentSelectedInput.value = option;
                         closeLetterPopup();
                         // 自动聚焦下一个输入框
                         focusNextInput(currentSelectedInput);
