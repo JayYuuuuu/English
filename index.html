@@ -1294,40 +1294,46 @@
         /*
             ========== 3. 朗读功能 & 用户选择的发音 (英式 / 美式) ==========
         */
-        let currentAccent = 'en-GB'; // 默认英式
         let voices = [];
+let currentAccent = 'en-GB';
+let voiceMap = new Map();
 
-        function loadVoices() {
+async function loadVoices() {
+    return new Promise(resolve => {
+        let voices = window.speechSynthesis.getVoices();
+        if (voices.length) {
+            voiceMap.clear();
+            voices.forEach(voice => voiceMap.set(voice.lang, voice));
+            return resolve(voices);
+        }
+        window.speechSynthesis.onvoiceschanged = () => {
             voices = window.speechSynthesis.getVoices();
-            if (voices.length === 0) {
-                window.speechSynthesis.onvoiceschanged = () => {
-                    voices = window.speechSynthesis.getVoices();
-                };
-            }
-        }
+            voiceMap.clear();
+            voices.forEach(voice => voiceMap.set(voice.lang, voice));
+            resolve(voices);
+        };
+    });
+}
 
-        function speakText(englishWord) {
-            if (!('speechSynthesis' in window)) {
-                showNotification('抱歉，当前浏览器不支持朗读功能。', 'danger');
-                return;
-            }
-            if (voices.length === 0) {
-                loadVoices();
-                // Wait a moment for voices to load
-                setTimeout(() => {
-                    speakText(englishWord);
-                }, 100);
-                return;
-            }
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(englishWord);
-            utterance.lang = currentAccent;  
-            const selectedVoice = voices.find(voice => voice.lang === currentAccent);
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
-            window.speechSynthesis.speak(utterance);
-        }
+async function speakText(englishWord) {
+    if (!('speechSynthesis' in window)) {
+        showNotification('抱歉，当前浏览器不支持朗读功能。', 'danger');
+        return;
+    }
+
+    if (voices.length === 0) {
+        voices = await loadVoices();
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(englishWord);
+    utterance.lang = currentAccent;
+    const selectedVoice = voiceMap.get(currentAccent);
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+    window.speechSynthesis.speak(utterance);
+}
 
         /*
             ========== 4. 动态生成单词卡片（带朗读按钮、标记已掌握等） ==========
