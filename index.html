@@ -155,40 +155,40 @@
         }
 
         /* 单词卡片的样式 */
-    .word-cell {
-        flex: 1 1 48%; /* 初始宽度为48%，确保两列布局 */
-        max-width: 48%;
-        margin: 1%;
-        text-align: center;
-        border-radius: 5px;
-        cursor: pointer;
-        padding: 10px;
-        font-size: 18px;
-        background-color: #fff;
-        transition: background-color var(--transition-duration), color var(--transition-duration), transform var(--transition-duration), box-shadow var(--transition-duration);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    /* 悬停时，卡片背景变深色，文字变白色 */
-    .word-cell:hover {
-        background-color: #333;
-        color: #fff;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-
-    /* 大屏幕设备（桌面） */
-    @media (min-width: 901px) {
         .word-cell {
-            flex: 1 1 150px; /* 保持原始宽度 */
-            max-width: 200px;
+            flex: 1 1 48%; /* 初始宽度为48%，确保两列布局 */
+            max-width: 48%;
+            margin: 1%;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 10px;
+            font-size: 18px;
+            background-color: #fff;
+            transition: background-color var(--transition-duration), color var(--transition-duration), transform var(--transition-duration), box-shadow var(--transition-duration);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
         }
-    }
-    
+
+        /* 悬停时，卡片背景变深色，文字变白色 */
+        .word-cell:hover {
+            background-color: #333;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        /* 大屏幕设备（桌面） */
+        @media (min-width: 901px) {
+            .word-cell {
+                flex: 1 1 150px; /* 保持原始宽度 */
+                max-width: 200px;
+            }
+        }
+        
         .word {
             font-weight: bold;
             font-size: 25px;
@@ -579,7 +579,91 @@
             transition: width 0.5s ease-in-out;
         }
 
-        /* 响应式的 @media 省略（保持与之前一致） */
+        /* ========== 响应式调整：手机端默写检查模块 ========== */
+        @media (max-width: 600px) {
+            /* 调整默写控制区域的布局方向为纵向 */
+            .dictation-controls {
+                flex-direction: column;
+                align-items: stretch; /* 让子元素拉伸以适应父容器宽度 */
+                gap: 10px; /* 减少间距 */
+            }
+
+            /* 让选择框和按钮占据全部宽度 */
+            .dictation-controls label,
+            .dictation-controls select,
+            .dictation-controls button {
+                width: 100%;
+            }
+
+            /* 调整按钮的字体大小和内边距 */
+            .dictation-controls button {
+                font-size: 14px;
+                padding: 8px 10px;
+            }
+
+            /* 调整默写输入区域的布局 */
+            .dictation-input .dictation-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            /* 让提交和跳过按钮占据全部宽度 */
+            .dictation-input .dictation-controls button {
+                width: 100%;
+                font-size: 14px;
+                padding: 8px 10px;
+            }
+
+            /* 调整字母输入框的大小 */
+            .letter-box {
+                width: 35px;
+                height: 35px;
+            }
+
+            .letter-box input {
+                font-size: 18px;
+            }
+
+            /* 调整字母选择浮窗的宽度 */
+            .letter-popup {
+                width: 90%;
+                max-width: 250px;
+            }
+
+            /* 调整通知容器的位置和大小 */
+            .notification {
+                width: 80%;
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+
+            /* 调整总结弹窗的内容区域宽度 */
+            .summary-content {
+                width: 95%;
+                max-width: 350px;
+            }
+
+            /* 调整其他可能需要的元素 */
+            .progress-container,
+            .search-container {
+                width: 90%;
+            }
+
+            #search-input {
+                width: 100%;
+            }
+
+            .progress-bar {
+                width: 100%;
+            }
+
+            .reset-button button {
+                width: 100%;
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -747,7 +831,7 @@
     <script>
         /*
             ========== 1. units 对象：包含 1~8 单元所有单词 ==========
-    
+
             下面的单词数据与你最初提供的一致（含所有单词、音标、中文释义）。
             如果需要自己增改，可在此处修改。
         */
@@ -1210,7 +1294,7 @@
 
         /*
             ========== 2. localStorage 记录 "learnedWords" 数组 ==========
-    
+
             用于存储和读取用户「已掌握」的单词状态
         */
         let learnedWords = JSON.parse(localStorage.getItem('learnedWords')) || [];
