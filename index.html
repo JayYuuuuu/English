@@ -146,8 +146,8 @@
         }
         /* 已掌握单词的特殊样式：淡绿色背景，字体回深色 */
         .word-cell.learned {
-            background-color: #d4edda;
-            color: #333;
+            background-color: #c3e6cb; /* 更深的绿色 */
+            color: #155724; /* 深绿色文字 */
         }
         /* 去掉链接的默认下划线、保持文字颜色 */
         a {
@@ -177,8 +177,92 @@
             background-color: #0056b3;
         }
 
-        /* 学习进度统计的样式 */
-        .progress-container {
+        /* 禁用按钮样式 */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 默写检查区域样式 */
+        .dictation-container {
+            margin: 20px;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .dictation-container h2 {
+            margin-top: 0;
+            font-size: 20px;
+            text-align: center;
+        }
+        .dictation-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .dictation-controls label {
+            font-size: 16px;
+        }
+        .dictation-controls select,
+        .dictation-controls button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .dictation-question {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 30px;
+        }
+        /* 更新 .dictation-input 样式 */
+        .dictation-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        /* 新增字母输入框的容器 */
+        .letter-boxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .letter-box {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 20px;
+        }
+        .letter-box input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            text-align: center;
+            font-size: 20px;
+            text-transform: uppercase;
+            outline: none;
+        }
+        /* 显示空格 */
+        .space {
+            width: 20px;
+            height: 40px;
+            border: none;
+            background-color: transparent;
+        }
+        .dictation-feedback {
+            margin-top: 10px;
+            font-size: 16px;
             font-weight: bold;
         }
 
@@ -192,12 +276,14 @@
             }
 
             .usage-instructions,
-            .unit {
+            .unit,
+            .dictation-container {
                 margin: 10px;
                 padding: 10px;
             }
 
-            .unit h2 {
+            .unit h2,
+            .dictation-container h2 {
                 font-size: 20px;
             }
 
@@ -238,6 +324,35 @@
             .meaning {
                 font-size: 14px;
             }
+
+            /* 默写检查响应式 */
+            .dictation-controls {
+                gap: 10px;
+            }
+
+            .dictation-controls select,
+            .dictation-controls button {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .dictation-question {
+                font-size: 16px;
+            }
+
+            .dictation-input input {
+                width: 90%;
+            }
+
+            .letter-box {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+            }
+            .space {
+                width: 15px;
+                height: 30px;
+            }
         }
 
         /* 中等屏幕设备（平板） */
@@ -247,7 +362,8 @@
                 padding: 18px 0;
             }
 
-            .unit h2 {
+            .unit h2,
+            .dictation-container h2 {
                 font-size: 22px;
             }
 
@@ -281,6 +397,35 @@
             .meaning {
                 font-size: 15px;
             }
+
+            /* 默写检查响应式 */
+            .dictation-controls {
+                gap: 12px;
+            }
+
+            .dictation-controls select,
+            .dictation-controls button {
+                width: 80%;
+                max-width: 400px;
+            }
+
+            .dictation-question {
+                font-size: 18px;
+            }
+
+            .dictation-input input {
+                width: 80%;
+            }
+
+            .letter-box {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+            .space {
+                width: 18px;
+                height: 35px;
+            }
         }
 
         /* 大屏幕设备（桌面） */
@@ -311,61 +456,135 @@
             .meaning {
                 font-size: 16px;
             }
+
+            /* 默写检查响应式 */
+            .dictation-controls {
+                flex-direction: row;
+                justify-content: center;
+            }
+
+            .dictation-controls select,
+            .dictation-controls button {
+                width: auto;
+                max-width: none;
+            }
+
+            .dictation-question {
+                font-size: 20px;
+            }
+
+            .dictation-input input {
+                width: 60%;
+            }
+
+            .letter-box {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            .space {
+                width: 20px;
+                height: 40px;
+            }
         }
 
-        /* 悬浮导航条的样式（缩小40%） */
+        /* 总结弹窗样式 */
+        .summary-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none; /* 初始隐藏 */
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .summary-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .summary-content h2 {
+            margin-top: 0;
+            font-size: 22px;
+        }
+        .summary-content ul {
+            list-style-type: none;
+            padding: 0;
+            text-align: left;
+            margin: 10px 0;
+        }
+        .summary-content li {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        .close-summary {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background-color: #dc3545;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .close-summary:hover {
+            background-color: #c82333;
+        }
+
+        /* 重置按钮样式 */
+        .reset-button {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .reset-button button {
+            background-color: #000000;
+            color: #fff;
+        }
+        .reset-button button:hover {
+            background-color: #1600e0;
+        }
+
+        /* 浮动导航条样式（已更新） */
         .floating-nav {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid #ccc;
-            border-radius: 5px; /* 从8px缩小到5px */
-            padding: 6px; /* 从10px缩小到6px */
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            bottom: 20px; /* 距离底部20px */
+            right: 20px;  /* 距离右侧20px */
+            background-color: rgba(255, 255, 255, 0.5); /* 白色背景，50%透明度 */
+            padding: 10px 15px;
+            border-radius: 8px;
             z-index: 1000;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            max-width: 150px; /* 缩小宽度 */
         }
-
         .floating-nav h3 {
+            color: #000; /* 黑色文字 */
             margin: 0 0 10px 0;
-            font-size: 10px; /* 从16px缩小到10px */
+            font-size: 16px;
             text-align: center;
         }
-
         .floating-nav a {
             display: block;
+            background-color: #007bff; /* 与朗读按钮相同的蓝色背景 */
+            color: #fff; /* 白色文字 */
             margin: 5px 0;
-            padding: 4px 6px; /* 从6px 10px缩小到4px 6px */
-            background-color: #007bff;
-            color: #fff;
-            text-align: center;
-            border-radius: 4px;
             text-decoration: none;
-            transition: background-color 0.3s;
-            font-size: 8px; /* 从14px缩小到8px */
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
         }
-
         .floating-nav a:hover {
-            background-color: #0056b3;
-        }
-
-        /* 确保悬浮导航条在小屏幕设备上不遮挡内容 */
-        @media (max-width: 600px) {
-            .floating-nav {
-                bottom: 10px;
-                right: 10px;
-                padding: 4px; /* 从8px缩小到4px */
-            }
-
-            .floating-nav h3 {
-                font-size: 8px; /* 从14px缩小到8px */
-                margin-bottom: 8px;
-            }
-
-            .floating-nav a {
-                font-size: 6px; /* 从12px缩小到6px */
-                padding: 3px 5px; /* 从5px 8px缩小到3px 5px */
-            }
+            background-color: #0056b3; /* 深蓝色悬停效果 */
         }
     </style>
 </head>
@@ -376,31 +595,25 @@
     <!-- 使用说明区域 -->
     <div class="usage-instructions">
         <h2>页面使用说明</h2>
-        <p>本页面提供了七年级下册 Units 1~8 的常见单词，点击相应的“标记掌握”按钮，可以将单词记录到本地并将卡片变为绿色，再次点击可取消标记。</p>
-        <p>点击“朗读”按钮会用选定的发音（英式或美式）朗读该单词。</p>
-        <p>如果想查看该单词的详细读音，可以直接点击单词文本，会跳转到在线发音查询网站（<code>pronounceonline.com</code>）。</p>
-        <p>使用电脑浏览可获得完整体验，手机浏览朗读口音选择功能不可用。</p>
-                <div class="accent-options">
-            <span>电脑浏览可以自己选择朗读口音：</span>
-            <div>
-                <label>
-                    <input type="radio" name="accent" value="en-GB" checked />
-                    英式（en-GB）
-                </label>
-            </div>
-            <div>
-                <label>
-                    <input type="radio" name="accent" value="en-US" />
-                    美式（en-US）
-                </label>
-            </div>
+        <p>本页面提供了七年级下册 Units 1~8 的常见单词。点击“朗读”按钮，可以听到单词的发音。</p>
+        <p>使用电脑浏览可获得完整体验，手机浏览支持两列显示和朗读功能。</p>
+        <div class="accent-options">
+            <span>您可以选择朗读口音：</span>
+            <label for="accent-en-GB">
+                <input type="radio" id="accent-en-GB" name="accent" value="en-GB" checked aria-label="英式发音" />
+                英式（en-GB）
+            </label>
+            <label for="accent-en-US">
+                <input type="radio" id="accent-en-US" name="accent" value="en-US" aria-label="美式发音" />
+                美式（en-US）
+            </label>
+            <p>来自初一39班热心家长😄</p>
         </div>
-        <p>祝你使用愉快，学习顺利！</p>
-        <p>（初一39班好心家长😄）</p>
-
+      
         <!-- 添加搜索框 -->
         <div class="search-container">
-            <input type="text" id="search-input" placeholder="搜索单词..." />
+            <label for="search-input" class="visually-hidden">搜索单词</label>
+            <input type="text" id="search-input" placeholder="搜索单词..." aria-label="搜索单词" />
         </div>
 
         <!-- 添加学习进度显示 -->
@@ -408,57 +621,107 @@
             <span id="learned-count">已掌握：0</span> / 
             <span id="total-count">总单词：0</span>
         </div>
+
+        <!-- 添加重置按钮 -->
+        <div class="reset-button">
+            <button id="reset-learned" aria-label="重置所有已掌握单词">重置所有已掌握单词</button>
+        </div>
+    </div>
+
+    <!-- 默写检查功能 -->
+    <div class="dictation-container">
+        <h2>默写检查</h2>
+        <div class="dictation-controls">
+            <label for="dictation-unit">选择要默写的单元:</label>
+            <select id="dictation-unit" aria-label="选择默写单元">
+                <option value="" disabled selected>选择要默写的单元</option>
+                <option value="unit1">Unit 1</option>
+                <option value="unit2">Unit 2</option>
+                <option value="unit3">Unit 3</option>
+                <option value="unit4">Unit 4</option>
+                <option value="unit5">Unit 5</option>
+                <option value="unit6">Unit 6</option>
+                <option value="unit7">Unit 7</option>
+                <option value="unit8">Unit 8</option>
+            </select>
+            <button id="start-dictation" aria-label="开始默写">开始默写</button>
+            <button id="stop-dictation" disabled aria-label="停止默写">停止默写</button>
+        </div>
+        <div class="dictation-question" id="dictation-question" style="display: none;">
+            <!-- 显示中文释义 -->
+        </div>
+        <div class="dictation-input" id="dictation-input" style="display: none;">
+            <!-- 动态生成字母输入框 -->
+            <div class="letter-boxes" id="letter-boxes">
+                <!-- 输入框将在JavaScript中生成 -->
+            </div>
+            <div class="dictation-controls">
+                <button id="submit-answer" aria-label="提交答案">提交</button>
+                <button id="skip-word" aria-label="跳过单词">跳过</button>
+            </div>
+            <div class="dictation-feedback" id="dictation-feedback"></div>
+        </div>
+    </div>
+
+    <!-- 总结弹窗 -->
+    <div class="summary-modal" id="summary-modal">
+        <div class="summary-content">
+            <h2>默写总结</h2>
+            <p id="summary-text"></p>
+            <ul id="incorrect-list"></ul>
+            <button class="close-summary" onclick="closeSummary()" aria-label="关闭总结">关闭</button>
+        </div>
     </div>
 
     <!-- Unit 1 -->
     <div class="unit" id="unit1">
-        <h2>Unit 1 <span class="unit-count" id="unit1-count">已掌握: 0 / 总单词: 50</span></h2>
+        <h2>Unit 1 <span class="unit-count" id="unit1-count">已掌握: 0 / 总单词: 0</span></h2>
         <div class="table-container" id="unit1-table"></div>
     </div>
 
     <!-- Unit 2 -->
     <div class="unit" id="unit2">
-        <h2>Unit 2 <span class="unit-count" id="unit2-count">已掌握: 0 / 总单词: 50</span></h2>
+        <h2>Unit 2 <span class="unit-count" id="unit2-count">已掌握: 0 / 总单词: 0</span></h2>
         <div class="table-container" id="unit2-table"></div>
     </div>
 
     <!-- Unit 3 -->
     <div class="unit" id="unit3">
-        <h2>Unit 3 <span class="unit-count" id="unit3-count">已掌握: 0 / 总单词: 50</span></h2>
+        <h2>Unit 3 <span class="unit-count" id="unit3-count">已掌握: 0 / 总单词: 0</span></h2>
         <div class="table-container" id="unit3-table"></div>
     </div>
 
     <!-- Unit 4 -->
     <div class="unit" id="unit4">
-        <h2>Unit 4 <span class="unit-count" id="unit4-count">已掌握: 0 / 总单词: 50</span></h2>
+        <h2>Unit 4 <span class="unit-count" id="unit4-count">已掌握: 0 / 总单词: 0</span></h2>
         <div class="table-container" id="unit4-table"></div>
     </div>
 
     <!-- Unit 5 -->
     <div class="unit" id="unit5">
-        <h2>Unit 5 <span class="unit-count" id="unit5-count">已掌握: 0 / 总单词: 50</span></h2>
+        <h2>Unit 5 <span class="unit-count" id="unit5-count">已掌握: 0 / 总单词: 0</span></h2>
         <div class="table-container" id="unit5-table"></div>
     </div>
 
     <!-- Unit 6 -->
     <div class="unit" id="unit6">
-        <h2>Unit 6 <span class="unit-count" id="unit6-count">已掌握: 0 / 总单词: 50</span></h2>
+        <h2>Unit 6 <span class="unit-count" id="unit6-count">已掌握: 0 / 总单词: 0</span></h2>
         <div class="table-container" id="unit6-table"></div>
     </div>
 
     <!-- Unit 7 -->
     <div class="unit" id="unit7">
-        <h2>Unit 7 <span class="unit-count" id="unit7-count">已掌握: 0 / 总单词: 50</span></h2>
+        <h2>Unit 7 <span class="unit-count" id="unit7-count">已掌握: 0 / 总单词: 0</span></h2>
         <div class="table-container" id="unit7-table"></div>
     </div>
 
     <!-- Unit 8 -->
     <div class="unit" id="unit8">
-        <h2>Unit 8 <span class="unit-count" id="unit8-count">已掌握: 0 / 总单词: 50</span></h2>
+        <h2>Unit 8 <span class="unit-count" id="unit8-count">已掌握: 0 / 总单词: 0</span></h2>
         <div class="table-container" id="unit8-table"></div>
     </div>
 
-    <!-- 悬浮导航条 -->
+    <!-- 悬浮导航条（已更新） -->
     <div class="floating-nav">
         <h3>快速导航</h3>
         <a href="#unit1">Unit 1</a>
@@ -475,20 +738,23 @@
         /*
           1. 包含 1~8 单元所有单词的 "units" 对象
           2. localStorage 记录 "learnedWords" 数组
-          3. "标记掌握" + "朗读" 功能
+          3. 朗读功能
           4. 用户可在“英式 / 美式”间切换发音
           5. 搜索功能
           6. 学习进度统计
           7. 每个单元的学习进度显示
+          8. 默写检查功能
+          9. 跳过单词功能
+          10. 重置所有已掌握单词功能
         */
         const units = {
             unit1: [
                 {word:"cottage", pronunciation:"/ˈkɒtɪdʒ/", meaning:"村舍，小别墅"},
                 {word:"farmhouse", pronunciation:"/ˈfɑːmhaʊs/", meaning:"农场住宅，农舍"},
                 {word:"mobile", pronunciation:"/ˈməʊbaɪl/", meaning:"可移动的"},
-                {word:"mobile home", pronunciation:"", meaning:"活动住房"},
+                {word:"mobile home", pronunciation:"/ˈməʊbaɪl həʊm/", meaning:"活动住房"},
                 {word:"town", pronunciation:"/taʊn/", meaning:"镇，市镇"},
-                {word:"town house", pronunciation:"", meaning:"联排式住宅"},
+                {word:"town house", pronunciation:"/taʊn haʊs/", meaning:"联排式住宅"},
                 {word:"west", pronunciation:"/west/", meaning:"西方；西方的"},
                 {word:"hundred", pronunciation:"/ˈhʌndrəd/", meaning:"一百；许多"},
                 {word:"study", pronunciation:"/ˈstʌdi/", meaning:"书房"},
@@ -500,11 +766,11 @@
                 {word:"view", pronunciation:"/vjuː/", meaning:"风景，看法"},
                 {word:"mile", pronunciation:"/maɪl/", meaning:"英里"},
                 {word:"relax", pronunciation:"/rɪˈlæks/", meaning:"放松，休息"},
-                {word:"living room", pronunciation:"", meaning:"客厅，起居室"},
+                {word:"living room", pronunciation:"/ˈlɪvɪŋ ruːm/", meaning:"客厅，起居室"},
                 {word:"ahlan", pronunciation:"/ˈɑːhlən/", meaning:"你好（阿语）"},
                 {word:"village", pronunciation:"/ˈvɪlɪdʒ/", meaning:"村庄"},
                 {word:"carpet", pronunciation:"/ˈkɑːpɪt/", meaning:"地毯"},
-                {word:"next to", pronunciation:"", meaning:"紧邻"},
+                {word:"next to", pronunciation:"/nekst tuː/", meaning:"紧邻"},
                 {word:"yard", pronunciation:"/jɑːd/", meaning:"院子"},
                 {word:"hen", pronunciation:"/hen/", meaning:"母鸡"},
                 {word:"collect", pronunciation:"/kəˈlekt/", meaning:"收集，采集"},
@@ -513,21 +779,21 @@
                 {word:"zero", pronunciation:"/ˈzɪərəʊ/", meaning:"零"},
                 {word:"square", pronunciation:"/skweə(r)/", meaning:"平方"},
                 {word:"metre", pronunciation:"/ˈmiːtə(r)/", meaning:"米"},
-                {word:"square metre", pronunciation:"", meaning:"平方米"},
+                {word:"square metre", pronunciation:"/skweə(r) ˈmiːtə(r)/", meaning:"平方米"},
                 {word:"number", pronunciation:"/ˈnʌmbə(r)/", meaning:"号码；数字"},
                 {word:"million", pronunciation:"/ˈmɪljən/", meaning:"一百万"},
                 {word:"calendar", pronunciation:"/ˈkælɪndə(r)/", meaning:"日历"},
-                {word:"lunar calendar", pronunciation:"/ˈluːnə(r)/", meaning:"农历，阴历"},
+                {word:"lunar calendar", pronunciation:"/ˈluːnə(r) ˈkælɪndə(r)/", meaning:"农历，阴历"},
                 {word:"seaside", pronunciation:"/ˈsiːsaɪd/", meaning:"海边，海滨"},
                 {word:"east", pronunciation:"/iːst/", meaning:"东方；东方的"},
-                {word:"stone", pronunciation:"/stəʊn/", meaning:"石头"},
+                {word:"stone", pronunciation:"/stəʊn/", meaning:"石头（pl. stones）"},
                 {word:"seagrass", pronunciation:"/ˈsiːɡrɑːs/", meaning:"海草"},
                 {word:"hold", pronunciation:"/həʊld/", meaning:"承受住；坚持住"},
-                {word:"hold up", pronunciation:"", meaning:"支撑得住"},
+                {word:"hold up", pronunciation:"/həʊld ʌp/", meaning:"支撑得住"},
                 {word:"wind", pronunciation:"/wɪnd/", meaning:"风；气流"},
                 {word:"south-west", pronunciation:"/saʊθ ˈwest/", meaning:"西南方"},
                 {word:"bamboo", pronunciation:"/bæmˈbuː/", meaning:"竹子"},
-                {word:"ground floor", pronunciation:"", meaning:"一楼，底层"},
+                {word:"ground floor", pronunciation:"/ɡraʊnd flɔːr/", meaning:"一楼，底层"},
                 {word:"grassland", pronunciation:"/ˈɡrɑːslænd/", meaning:"草原，草地"},
                 {word:"north", pronunciation:"/nɔːθ/", meaning:"北方；北方的"},
                 {word:"tent", pronunciation:"/tent/", meaning:"帐篷"},
@@ -544,16 +810,16 @@
             unit2: [
                 {word:"neighbourhood", pronunciation:"/ˈneɪbəhʊd/", meaning:"街区，邻近的地方"},
                 {word:"officer", pronunciation:"/ˈɒfɪsə(r)/", meaning:"高级职员，官员"},
-                {word:"police officer", pronunciation:"", meaning:"警察，警员"},
+                {word:"police officer", pronunciation:"/pəˈliːs ˈɒfɪsə(r)/", meaning:"警察，警员"},
                 {word:"station", pronunciation:"/ˈsteɪʃn/", meaning:"车站，所，局"},
-                {word:"police station", pronunciation:"", meaning:"警察局"},
+                {word:"police station", pronunciation:"/pəˈliːs ˈsteɪʃn/", meaning:"警察局"},
                 {word:"restaurant", pronunciation:"/ˈrestrɒnt/", meaning:"餐厅，饭馆"},
                 {word:"neighbour", pronunciation:"/ˈneɪbə(r)/", meaning:"邻居"},
                 {word:"above", pronunciation:"/əˈbʌv/", meaning:"在…上面"},
                 {word:"lawyer", pronunciation:"/ˈlɔɪə(r)/", meaning:"律师"},
                 {word:"law", pronunciation:"/lɔː/", meaning:"法律，规则"},
                 {word:"community", pronunciation:"/kəˈmjuːnəti/", meaning:"社区"},
-                {word:"from time to time", pronunciation:"", meaning:"偶尔，不时"},
+                {word:"from time to time", pronunciation:"/frəm taɪm tuː taɪm/", meaning:"偶尔，不时"},
                 {word:"volunteer", pronunciation:"/ˌvɒlənˈtɪə(r)/", meaning:"志愿者"},
                 {word:"laptop", pronunciation:"/ˈlæptɒp/", meaning:"笔记本电脑"},
                 {word:"engineer", pronunciation:"/ˌendʒɪˈnɪə(r)/", meaning:"工程师"},
@@ -564,19 +830,19 @@
                 {word:"anyone", pronunciation:"/ˈeniwʌn/", meaning:"任何人"},
                 {word:"college", pronunciation:"/ˈkɒlɪdʒ/", meaning:"学院，大（学）"},
                 {word:"willing", pronunciation:"/ˈwɪlɪŋ/", meaning:"乐意的，愿意的"},
-                {word:"be willing to", pronunciation:"", meaning:"乐意做某事"},
+                {word:"be willing to", pronunciation:"/biː ˈwɪlɪŋ tuː/", meaning:"乐意做某事"},
                 {word:"tidy", pronunciation:"/ˈtaɪdi/", meaning:"整理，收拾"},
                 {word:"such", pronunciation:"/sʌtʃ/", meaning:"如此，这样的"},
-                {word:"any time", pronunciation:"", meaning:"在任何时候"},
-                {word:"pick up", pronunciation:"", meaning:"捡起，拾起"},
+                {word:"any time", pronunciation:"/ˈeni taɪm/", meaning:"在任何时候"},
+                {word:"pick up", pronunciation:"/pɪk ʌp/", meaning:"捡起，拾起"},
                 {word:"rubbish", pronunciation:"/ˈrʌbɪʃ/", meaning:"垃圾，废弃物"},
                 {word:"bench", pronunciation:"/bentʃ/", meaning:"长椅"},
                 {word:"if", pronunciation:"/ɪf/", meaning:"如果"},
-                {word:"in a hurry", pronunciation:"", meaning:"匆忙"},
+                {word:"in a hurry", pronunciation:"/ɪn ə ˈhʌri/", meaning:"匆忙"},
                 {word:"anything", pronunciation:"/ˈeniθɪŋ/", meaning:"任何事物"},
                 {word:"invite", pronunciation:"/ɪnˈvaɪt/", meaning:"邀请"},
                 {word:"exchange", pronunciation:"/ɪksˈtʃeɪndʒ/", meaning:"交流；交换"},
-                {word:"exchange student", pronunciation:"", meaning:"交换生"},
+                {word:"exchange student", pronunciation:"/ɪksˈtʃeɪndʒ ˈstjuːdənt/", meaning:"交换生"},
                 {word:"notice", pronunciation:"/ˈnəʊtɪs/", meaning:"通知"},
                 {word:"information", pronunciation:"/ˌɪnfəˈmeɪʃn/", meaning:"信息，消息"},
                 {word:"below", pronunciation:"/bɪˈləʊ/", meaning:"在…下面"},
@@ -585,15 +851,15 @@
                 {word:"throat", pronunciation:"/θrəʊt/", meaning:"喉咙"},
                 {word:"trouble", pronunciation:"/ˈtrʌbl/", meaning:"问题，麻烦"},
                 {word:"machine", pronunciation:"/məˈʃiːn/", meaning:"机器"},
-                {word:"washing machine", pronunciation:"", meaning:"洗衣机"},
+                {word:"washing machine", pronunciation:"/ˈwɒʃɪŋ məˈʃiːn/", meaning:"洗衣机"},
                 {word:"fridge", pronunciation:"/frɪdʒ/", meaning:"冰箱"},
-                {word:"deal with", pronunciation:"", meaning:"处理，应付"},
+                {word:"deal with", pronunciation:"/diːl wɪð/", meaning:"处理，应付"},
                 {word:"wonder", pronunciation:"/ˈwʌndə(r)/", meaning:"琢磨，想知道"},
                 {word:"able", pronunciation:"/ˈeɪbl/", meaning:"能够"},
                 {word:"post", pronunciation:"/pəʊst/", meaning:"发布；帖子"},
                 {word:"raise", pronunciation:"/reɪz/", meaning:"筹募；举起"},
                 {word:"organize", pronunciation:"/ˈɔːɡənaɪz/", meaning:"组织，安排"},
-                {word:"give away", pronunciation:"", meaning:"赠送，分发"}
+                {word:"give away", pronunciation:"/ɡɪv əˈweɪ/", meaning:"赠送，分发"}
             ],
             unit3: [
                 {word:"kilometre", pronunciation:"/ˈkɪləmiːtə(r)/", meaning:"千米 (km)"},
@@ -605,14 +871,14 @@
                 {word:"shall", pronunciation:"/ʃæl/", meaning:"将要；征求意见"},
                 {word:"attract", pronunciation:"/əˈtrækt/", meaning:"吸引，招引"},
                 {word:"capital", pronunciation:"/ˈkæpɪtl/", meaning:"首都"},
-                {word:"show sb around", pronunciation:"", meaning:"领某人参观"},
+                {word:"show sb around", pronunciation:"/ʃoʊ sʌmˈbɒdi əˈraʊnd/", meaning:"领某人参观"},
                 {word:"once", pronunciation:"/wʌns/", meaning:"曾经"},
                 {word:"palace", pronunciation:"/ˈpæləs/", meaning:"宫殿"},
                 {word:"emperor", pronunciation:"/ˈempərə(r)/", meaning:"皇帝"},
                 {word:"ancient", pronunciation:"/ˈeɪnʃənt/", meaning:"古代的"},
                 {word:"treasure", pronunciation:"/ˈtreʒə(r)/", meaning:"珍宝；财富"},
                 {word:"worth", pronunciation:"/wɜːθ/", meaning:"值得的，有价值"},
-                {word:"be well worth", pronunciation:"", meaning:"很值得"},
+                {word:"be well worth", pronunciation:"/biː wɛl wɜːθ/", meaning:"很值得"},
                 {word:"visitor", pronunciation:"/ˈvɪzɪtə(r)/", meaning:"游客，来访者"},
                 {word:"raise", pronunciation:"/reɪz/", meaning:"举起；提高"},
                 {word:"national", pronunciation:"/ˈnæʃnəl/", meaning:"国家的"},
@@ -624,10 +890,10 @@
                 {word:"local", pronunciation:"/ˈləʊkl/", meaning:"当地的，地方的"},
                 {word:"theatre", pronunciation:"/ˈθɪətə(r)/", meaning:"戏院，剧场"},
                 {word:"interest", pronunciation:"/ˈɪntrəst/", meaning:"兴趣，吸引力"},
-                {word:"place of interest", pronunciation:"", meaning:"名胜"},
+                {word:"place of interest", pronunciation:"/pleɪs əv ˈɪntrəst/", meaning:"名胜"},
                 {word:"form", pronunciation:"/fɔːm/", meaning:"形式；种类"},
                 {word:"stadium", pronunciation:"/ˈsteɪdiəm/", meaning:"体育场"},
-                {word:"date from", pronunciation:"", meaning:"追溯到"},
+                {word:"date from", pronunciation:"/deɪt frəm/", meaning:"追溯到"},
                 {word:"shopkeeper", pronunciation:"/ˈʃɒpkiːpə(r)/", meaning:"店主"},
                 {word:"smile", pronunciation:"/smaɪl/", meaning:"微笑"},
                 {word:"sandwich", pronunciation:"/ˈsænwɪtʃ/", meaning:"三明治"},
@@ -643,10 +909,10 @@
                 {word:"recommend", pronunciation:"/ˌrekəˈmend/", meaning:"推荐，建议"},
                 {word:"tower", pronunciation:"/ˈtaʊə(r)/", meaning:"塔"},
                 {word:"along", pronunciation:"/əˈlɒŋ/", meaning:"沿着"},
-                {word:"take in", pronunciation:"", meaning:"吸入；领略"},
+                {word:"take in", pronunciation:"/teɪk ɪn/", meaning:"吸入；领略"},
                 {word:"sunset", pronunciation:"/ˈsʌnset/", meaning:"日落，傍晚"},
                 {word:"fantastic", pronunciation:"/fænˈtæstɪk/", meaning:"极好的"},
-                {word:"fish and chips", pronunciation:"", meaning:"炸鱼薯条"},
+                {word:"fish and chips", pronunciation:"/fɪʃ ənd tʃɪps/", meaning:"炸鱼薯条"},
                 {word:"British", pronunciation:"/ˈbrɪtɪʃ/", meaning:"英国的"},
                 {word:"tool", pronunciation:"/tuːl/", meaning:"工具"},
                 {word:"end", pronunciation:"/end/", meaning:"结束；尽头"},
@@ -659,7 +925,7 @@
                 {word:"china", pronunciation:"/ˈtʃaɪnə/", meaning:"瓷器"},
                 {word:"clay", pronunciation:"/kleɪ/", meaning:"黏土，陶土"},
                 {word:"teapot", pronunciation:"/ˈtiːpɒt/", meaning:"茶壶"},
-                {word:"taste", pronunciation:"/teɪst/", meaning:"有…味道"},
+                {word:"taste", pronunciation:"/teɪst/", meaning:"品；吃；喝"},
                 {word:"woodcarving", pronunciation:"/ˈwʊdkɑːvɪŋ/", meaning:"木雕"},
                 {word:"even", pronunciation:"/ˈiːvn/", meaning:"甚至，即使"},
                 {word:"carve", pronunciation:"/kɑːv/", meaning:"雕刻"},
@@ -671,7 +937,7 @@
                 {word:"add", pronunciation:"/æd/", meaning:"添加，补充说"},
                 {word:"practice", pronunciation:"/ˈpræktɪs/", meaning:"练习，训练"},
                 {word:"landscape", pronunciation:"/ˈlændskeɪp/", meaning:"风景，风景画"},
-                {word:"paper-cut", pronunciation:"", meaning:"剪纸作品"},
+                {word:"paper-cut", pronunciation:"/ˈpəʊstkɑːt/", meaning:"剪纸作品"},
                 {word:"express", pronunciation:"/ɪkˈspres/", meaning:"表达，表示"},
                 {word:"happiness", pronunciation:"/ˈhæpinəs/", meaning:"快乐，幸福"},
                 {word:"couple", pronunciation:"/ˈkʌpl/", meaning:"夫妻，情侣"},
@@ -687,7 +953,7 @@
                 {word:"theirs", pronunciation:"/ðeəz/", meaning:"他们的"},
                 {word:"his", pronunciation:"/hɪz/", meaning:"他的"},
                 {word:"postcard", pronunciation:"/ˈpəʊstkɑːd/", meaning:"明信片"},
-                {word:"Chinese knot", pronunciation:"", meaning:"中国结"},
+                {word:"Chinese knot", pronunciation:"/ˈtʃaɪniːz nɒt/", meaning:"中国结"},
                 {word:"figure", pronunciation:"/ˈfɪɡə(r)/", meaning:"雕像，塑像"},
                 {word:"mould", pronunciation:"/məʊld/", meaning:"模具"},
                 {word:"simple", pronunciation:"/ˈsɪmpl/", meaning:"简单的"},
@@ -720,7 +986,7 @@
                 {word:"wing", pronunciation:"/wɪŋ/", meaning:"翅膀"},
                 {word:"taste", pronunciation:"/teɪst/", meaning:"品；吃；喝"},
                 {word:"awake", pronunciation:"/əˈweɪk/", meaning:"醒着"},
-                {word:"up to", pronunciation:"", meaning:"达到…；至多"},
+                {word:"up to", pronunciation:"/ʌp tuː/", meaning:"达到…；至多"},
                 {word:"insect", pronunciation:"/ˈɪnsekt/", meaning:"昆虫"},
                 {word:"lift", pronunciation:"/lɪft/", meaning:"举起"},
                 {word:"times", pronunciation:"/taɪmz/", meaning:"倍"},
@@ -734,7 +1000,7 @@
                 {word:"stick", pronunciation:"/stɪk/", meaning:"枝条"},
                 {word:"bite", pronunciation:"/baɪt/", meaning:"咬"},
                 {word:"fight", pronunciation:"/faɪt/", meaning:"打架，战斗"},
-                {word:"look after", pronunciation:"", meaning:"照料"},
+                {word:"look after", pronunciation:"/lʊk ˈɑːftə(r)/", meaning:"照料"},
                 {word:"fur", pronunciation:"/fɜːr/", meaning:"（动物的）毛皮"},
                 {word:"purr", pronunciation:"/pɜːr/", meaning:"(猫)呼噜声"},
                 {word:"forget", pronunciation:"/fəˈɡet/", meaning:"忘记"},
@@ -757,13 +1023,13 @@
                 {word:"safely", pronunciation:"/ˈseɪfli/", meaning:"安全地"},
                 {word:"echo", pronunciation:"/ˈekəʊ/", meaning:"回声"},
                 {word:"cheer", pronunciation:"/tʃɪə(r)/", meaning:"欢呼，加油"},
-                {word:"cheer up", pronunciation:"", meaning:"使振奋"},
+                {word:"cheer up", pronunciation:"/tʃɪə(r) ʌp/", meaning:"使振奋"},
                 {word:"hard-working", pronunciation:"/ˌhɑːd ˈwɜːkɪŋ/", meaning:"辛勤的"},
                 {word:"useful", pronunciation:"/ˈjuːsfl/", meaning:"有用的"},
                 {word:"save", pronunciation:"/seɪv/", meaning:"拯救，救助"},
                 {word:"correct", pronunciation:"/kəˈrekt/", meaning:"正确的"},
                 {word:"relationship", pronunciation:"/rɪˈleɪʃnʃɪp/", meaning:"关系"},
-                {word:"care for", pronunciation:"", meaning:"照料"},
+                {word:"care for", pronunciation:"/keə(r) fɔː(r)/", meaning:"照料"},
                 {word:"guinea pig", pronunciation:"/ˈɡɪni pɪɡ/", meaning:"天竺鼠"},
                 {word:"round", pronunciation:"/raʊnd/", meaning:"圆形的"},
                 {word:"name", pronunciation:"/neɪm/", meaning:"命名"},
@@ -793,11 +1059,11 @@
                 {word:"sand", pronunciation:"/sænd/", meaning:"沙子"},
                 {word:"nobody", pronunciation:"/ˈnəʊbɒdi/", meaning:"没有任何人"},
                 {word:"conditions", pronunciation:"/kənˈdɪʃənz/", meaning:"条件，环境"},
-                {word:"a few", pronunciation:"", meaning:"一些，几个"},
+                {word:"a few", pronunciation:"/ə fjuː/", meaning:"一些，几个"},
                 {word:"survive", pronunciation:"/səˈvaɪv/", meaning:"存活，生存"},
                 {word:"huge", pronunciation:"/hjuːdʒ/", meaning:"巨大的"},
                 {word:"planet", pronunciation:"/ˈplænɪt/", meaning:"行星"},
-                {word:"be home to", pronunciation:"", meaning:"是…的家园"},
+                {word:"be home to", pronunciation:"/biː həʊm tuː/", meaning:"是…的家园"},
                 {word:"produce", pronunciation:"/prəˈdjuːs/", meaning:"生产，制造"},
                 {word:"oxygen", pronunciation:"/ˈɒksɪdʒən/", meaning:"氧气"},
                 {word:"breathe", pronunciation:"/briːð/", meaning:"呼吸"},
@@ -828,17 +1094,17 @@
             ],
             unit7: [
                 {word:"cycle", pronunciation:"/ˈsaɪkl/", meaning:"骑自行车"},
-                {word:"horse riding", pronunciation:"", meaning:"骑马"},
+                {word:"horse riding", pronunciation:"/hɔːs ˈraɪdɪŋ/", meaning:"骑马"},
                 {word:"skate", pronunciation:"/skeɪt/", meaning:"滑冰，溜冰"},
                 {word:"break", pronunciation:"/breɪk/", meaning:"休息"},
-                {word:"take a break", pronunciation:"", meaning:"休息一下"},
+                {word:"take a break", pronunciation:"/teɪk ə breɪk/", meaning:"休息一下"},
                 {word:"balance", pronunciation:"/ˈbæləns/", meaning:"平衡"},
                 {word:"might", pronunciation:"/maɪt/", meaning:"可能"},
-                {word:"on one's own", pronunciation:"", meaning:"独自地"},
+                {word:"on one's own", pronunciation:"/ɒn wʌnz əʊn/", meaning:"独自地"},
                 {word:"ski", pronunciation:"/skiː/", meaning:"滑雪"},
                 {word:"would", pronunciation:"/wʊd/", meaning:"将会（假设）"},
                 {word:"experience", pronunciation:"/ɪkˈspɪəriəns/", meaning:"经历，体验"},
-                {word:"set off", pronunciation:"", meaning:"出发"},
+                {word:"set off", pronunciation:"/set ɒf/", meaning:"出发"},
                 {word:"follow", pronunciation:"/ˈfɒləʊ/", meaning:"跟随"},
                 {word:"detail", pronunciation:"/ˈdiːteɪl/", meaning:"细节"},
                 {word:"countryside", pronunciation:"/ˈkʌntrisaɪd/", meaning:"乡村"},
@@ -848,17 +1114,17 @@
                 {word:"luckily", pronunciation:"/ˈlʌkɪli/", meaning:"幸运地"},
                 {word:"arrive", pronunciation:"/əˈraɪv/", meaning:"到达"},
                 {word:"app", pronunciation:"/æp/", meaning:"应用软件"},
-                {word:"find out", pronunciation:"", meaning:"查明，弄清"},
+                {word:"find out", pronunciation:"/faɪnd aʊt/", meaning:"查明，弄清"},
                 {word:"enjoyable", pronunciation:"/ɪnˈdʒɔɪəbl/", meaning:"令人愉快的"},
                 {word:"proud", pronunciation:"/praʊd/", meaning:"自豪的"},
-                {word:"be proud of", pronunciation:"", meaning:"为…自豪"},
+                {word:"be proud of", pronunciation:"/biː praʊd əv/", meaning:"为…自豪"},
                 {word:"hike", pronunciation:"/haɪk/", meaning:"远足，徒步"},
                 {word:"noon", pronunciation:"/nuːn/", meaning:"正午"},
                 {word:"later", pronunciation:"/ˈleɪtə(r)/", meaning:"之后，稍后"},
-                {word:"at first", pronunciation:"", meaning:"起初"},
-                {word:"little by little", pronunciation:"", meaning:"逐渐地"},
+                {word:"at first", pronunciation:"/ət fɜːst/", meaning:"起初"},
+                {word:"little by little", pronunciation:"/ˈlɪtl baɪ ˈlɪtl/", meaning:"逐渐地"},
                 {word:"picnic", pronunciation:"/ˈpɪknɪk/", meaning:"野餐"},
-                {word:"because of", pronunciation:"", meaning:"因为"},
+                {word:"because of", pronunciation:"/bɪˈkɒz əv/", meaning:"因为"},
                 {word:"campsite", pronunciation:"/ˈkæmpsaɪt/", meaning:"露营地"},
                 {word:"childhood", pronunciation:"/ˈtʃaɪldhʊd/", meaning:"童年"},
                 {word:"relaxed", pronunciation:"/rɪˈlækst/", meaning:"放松的"},
@@ -866,21 +1132,21 @@
                 {word:"focus", pronunciation:"/ˈfəʊkəs/", meaning:"集中(注意力)"},
                 {word:"mind", pronunciation:"/maɪnd/", meaning:"思维，头脑"},
                 {word:"roll", pronunciation:"/rəʊl/", meaning:"滚动；转动"},
-                {word:"roll out", pronunciation:"", meaning:"展开；推出"},
-                {word:"sleeping bag", pronunciation:"", meaning:"睡袋"},
+                {word:"roll out", pronunciation:"/rəʊl aʊt/", meaning:"展开；推出"},
+                {word:"sleeping bag", pronunciation:"/ˈsliːpɪŋ bæɡ/", meaning:"睡袋"},
                 {word:"fall", pronunciation:"/fɔːl/", meaning:"跌倒；掉落"},
                 {word:"asleep", pronunciation:"/əˈsliːp/", meaning:"睡着"},
                 {word:"chance", pronunciation:"/tʃɑːns/", meaning:"机会；可能性"},
-                {word:"first-time", pronunciation:"", meaning:"第一次的"},
+                {word:"first-time", pronunciation:"/fɜːst taɪm/", meaning:"第一次的"},
                 {word:"camper", pronunciation:"/ˈkæmpə(r)/", meaning:"露营者"},
                 {word:"medicine", pronunciation:"/ˈmedɪsən/", meaning:"药物；医学"},
                 {word:"safety", pronunciation:"/ˈseɪfti/", meaning:"安全"},
                 {word:"birdwatching", pronunciation:"/ˈbɜːdwɒtʃɪŋ/", meaning:"观鸟"},
                 {word:"binoculars", pronunciation:"/bɪˈnɒkjʊlərz/", meaning:"双筒望远镜"},
                 {word:"clearly", pronunciation:"/ˈklɪəli/", meaning:"清晰地"},
-                {word:"had better", pronunciation:"", meaning:"最好…"},
+                {word:"had better", pronunciation:"/hæd ˈbɛtə(r)/", meaning:"最好…"},
                 {word:"thirsty", pronunciation:"/ˈθɜːsti/", meaning:"口渴的"},
-                {word:"no problem", pronunciation:"", meaning:"没问题，不客气"}
+                {word:"no problem", pronunciation:"/nəʊ ˈprɒbləm/", meaning:"没问题，不客气"}
             ],
             unit8: [
                 {word:"fisherman", pronunciation:"/ˈfɪʃəmən/", meaning:"渔民，钓鱼人"},
@@ -909,7 +1175,7 @@
                 {word:"company", pronunciation:"/ˈkʌmpəni/", meaning:"公司"},
                 {word:"just", pronunciation:"/dʒʌst/", meaning:"刚才；仅仅"},
                 {word:"whether", pronunciation:"/ˈwɛðə(r)/", meaning:"是否"},
-                {word:"be born", pronunciation:"", meaning:"出生"},
+                {word:"be born", pronunciation:"/biː bɔːn/", meaning:"出生"},
                 {word:"lose", pronunciation:"/luːz/", meaning:"失去；丢失"},
                 {word:"publish", pronunciation:"/ˈpʌblɪʃ/", meaning:"出版，发表"},
                 {word:"die", pronunciation:"/daɪ/", meaning:"死亡"},
@@ -922,8 +1188,8 @@
                 {word:"fairy", pronunciation:"/ˈfeəri/", meaning:"仙女，小精灵"},
                 {word:"peach", pronunciation:"/piːtʃ/", meaning:"桃子"},
                 {word:"fill", pronunciation:"/fɪl/", meaning:"填满"},
-                {word:"give up", pronunciation:"", meaning:"放弃"},
-                {word:"in the face of", pronunciation:"", meaning:"面对，尽管…"},
+                {word:"give up", pronunciation:"/ɡɪv ʌp/", meaning:"放弃"},
+                {word:"in the face of", pronunciation:"/ɪn ðə feɪs əv/", meaning:"面对，尽管…"},
                 {word:"task", pronunciation:"/tɑːsk/", meaning:"任务"},
                 {word:"goal", pronunciation:"/ɡəʊl/", meaning:"目标"},
                 {word:"solve", pronunciation:"/sɒlv/", meaning:"解决"},
@@ -951,22 +1217,37 @@
             return learnedWords.includes(word);
         }
 
-        function toggleWordLearned(word) {
-            if (isWordLearned(word)) {
-                // 取消标记
-                learnedWords = learnedWords.filter(w => w !== word);
-            } else {
-                // 标记为已掌握
+        function markWordAsLearned(word) {
+            if (!isWordLearned(word)) {
                 learnedWords.push(word);
-            }
-            localStorage.setItem('learnedWords', JSON.stringify(learnedWords));
-            updateProgress();
-            // 重新渲染按钮文本
-            renderLearnedStatus(word);
-            // 更新对应单元的学习进度
-            if (wordToUnit[word]) {
+                localStorage.setItem('learnedWords', JSON.stringify(learnedWords));
+                updateProgress();
                 updateUnitCount(wordToUnit[word]);
+                updateWordCellStyle(word, true);
             }
+        }
+
+        function markWordAsNotLearned(word) {
+            if (isWordLearned(word)) {
+                learnedWords = learnedWords.filter(w => w !== word);
+                localStorage.setItem('learnedWords', JSON.stringify(learnedWords));
+                updateProgress();
+                updateUnitCount(wordToUnit[word]);
+                updateWordCellStyle(word, false);
+            }
+        }
+
+        function updateWordCellStyle(word, isLearned) {
+            document.querySelectorAll('.word-cell').forEach(cell => {
+                const cellWord = cell.querySelector('.word').textContent;
+                if (cellWord === word) {
+                    if (isLearned) {
+                        cell.classList.add('learned');
+                    } else {
+                        cell.classList.remove('learned');
+                    }
+                }
+            });
         }
 
         // ~~~ 朗读功能：根据 currentAccent 选择英式或美式 ~~~
@@ -976,12 +1257,15 @@
                 return;
             }
 
+            // 取消当前朗读
+            window.speechSynthesis.cancel();
+
             const utterance = new SpeechSynthesisUtterance(englishWord);
             utterance.lang = currentAccent;  // 根据用户选择来设置
             window.speechSynthesis.speak(utterance);
         }
 
-        // ~~~ 动态生成单词卡片：单词链接、标记按钮、朗读按钮 ~~~
+        // ~~~ 动态生成单词卡片：单词链接、朗读按钮 ~~~
         function createTable(containerId, wordList) {
             const container = document.getElementById(containerId);
             const unitId = containerId.replace('-table', ''); // e.g., 'unit1'
@@ -1008,46 +1292,40 @@
                 const link = document.createElement('a');
                 link.href = `https://pronounceonline.com/zh/search/?key=${encodeURIComponent(item.word)}`;
                 link.target = "_blank";
+                link.setAttribute('aria-label', `查看单词 ${item.word} 的发音和意思`);
                 link.innerHTML = `
                     <div class="word">${item.word}</div>
-                    <div class="pronunciation">${item.pronunciation}</div>
+                    <div class="pronunciation">${item.pronunciation ? item.pronunciation : ''}</div>
                     <div class="meaning">${item.meaning}</div>
                 `;
+
+                // 隐藏音标如果为空
+                if (!item.pronunciation || item.pronunciation.trim() === "") {
+                    link.querySelector('.pronunciation').style.display = 'none';
+                }
 
                 // 按钮区域
                 const btnRow = document.createElement('div');
                 btnRow.className = 'btn-row';
 
-                // 1) 标记掌握按钮
-                const btnLearn = document.createElement('button');
-                btnLearn.textContent = isWordLearned(item.word) ? '取消标记' : '标记掌握';
-                btnLearn.classList.add('btn-learn');
-
-                btnLearn.addEventListener('click', (e) => {
-                    e.preventDefault(); // 不要让点击按钮也触发链接跳转
-                    toggleWordLearned(item.word);
-                });
-
-                // 2) 朗读按钮
+                // 朗读按钮
                 const btnSpeak = document.createElement('button');
                 btnSpeak.textContent = '朗读';
                 btnSpeak.classList.add('btn-speak');
+                btnSpeak.setAttribute('aria-label', `朗读单词 ${item.word}`);
 
                 // 如果发音为空，则禁用按钮
-                if (item.pronunciation.trim() === "") {
+                if (!item.pronunciation || item.pronunciation.trim() === "") {
                     btnSpeak.disabled = true;
                     btnSpeak.title = "该单词暂无发音信息";
                     btnSpeak.style.backgroundColor = '#6c757d'; // 灰色
                     btnSpeak.style.cursor = 'not-allowed';
                 } else {
-                    btnSpeak.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        speakText(item.word);
-                    });
+                    // 事件委托中处理按钮点击
+                    // No need to add individual event listeners here
                 }
 
                 // 把按钮都加到 btnRow
-                btnRow.appendChild(btnLearn);
                 btnRow.appendChild(btnSpeak);
 
                 // 整理结构：卡片里先放链接，再放按钮区
@@ -1094,24 +1372,231 @@
             }
         }
 
-        // ~~~ 重新渲染标记状态按钮文本 ~~~
-        function renderLearnedStatus(word) {
-            document.querySelectorAll('.word-cell').forEach(cell => {
-                const cellWord = cell.querySelector('.word').textContent;
-                if (cellWord === word) {
-                    const btnLearn = cell.querySelector('.btn-learn');
-                    if (isWordLearned(word)) {
-                        cell.classList.add('learned');
-                        btnLearn.textContent = '取消标记';
-                    } else {
-                        cell.classList.remove('learned');
-                        btnLearn.textContent = '标记掌握';
-                    }
-                }
-            });
+        // ~~~ 重置所有已掌握单词功能 ~~~
+        function resetAllLearnedWords() {
+            if (learnedWords.length === 0) {
+                alert('当前没有已掌握的单词需要重置。');
+                return;
+            }
+            const confirmReset = confirm('您确定要重置所有已掌握的单词吗？这将使所有单词重新显示在默写中。');
+            if (confirmReset) {
+                learnedWords = [];
+                localStorage.setItem('learnedWords', JSON.stringify(learnedWords));
+                updateProgress();
+                // 移除所有单元的已掌握标记
+                document.querySelectorAll('.word-cell.learned').forEach(cell => {
+                    cell.classList.remove('learned');
+                });
+                // 更新所有单元的学习进度显示
+                Object.keys(units).forEach(unitId => {
+                    updateUnitCount(unitId);
+                });
+                alert('所有已掌握的单词已被重置。');
+            }
         }
 
-        // 初始化函数
+        // ~~~ 默写检查功能 ~~~
+        let currentDictationUnit = '';
+        let dictationWords = [];
+        let currentWordIndex = 0;
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let skippedCount = 0;
+        let incorrectWords = [];
+
+        function startDictation(unitId) {
+            currentDictationUnit = unitId;
+            // 过滤掉已掌握的单词
+            dictationWords = units[unitId].filter(wordObj => !isWordLearned(wordObj.word));
+            if (dictationWords.length === 0) {
+                alert('该单元的所有单词已掌握，无需默写。');
+                return;
+            }
+            currentWordIndex = 0;
+            correctCount = 0;
+            incorrectCount = 0;
+            skippedCount = 0;
+            incorrectWords = [];
+            // 随机打乱单词顺序
+            dictationWords = shuffleArray(dictationWords);
+            // 更新按钮状态
+            document.getElementById('stop-dictation').disabled = false;
+            document.getElementById('start-dictation').disabled = true;
+            displayCurrentDictationWord();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function displayCurrentDictationWord() {
+            if (currentWordIndex >= dictationWords.length) {
+                showSummary();
+                resetDictation();
+                return;
+            }
+            const currentWord = dictationWords[currentWordIndex];
+            const questionElement = document.getElementById('dictation-question');
+            const inputContainer = document.getElementById('dictation-input');
+            const letterBoxesContainer = document.getElementById('letter-boxes');
+            const feedbackElement = document.getElementById('dictation-feedback');
+
+            questionElement.textContent = `释义：${currentWord.meaning}`;
+            questionElement.style.display = 'block';
+            inputContainer.style.display = 'flex';
+            feedbackElement.textContent = '';
+            letterBoxesContainer.innerHTML = ''; // 清空之前的输入框
+
+            // 生成字母输入框
+            const word = currentWord.word;
+            for (let char of word) {
+                if (char === ' ') {
+                    // 显示空格
+                    const spaceDiv = document.createElement('div');
+                    spaceDiv.className = 'space';
+                    letterBoxesContainer.appendChild(spaceDiv);
+                } else {
+                    // 创建字母输入框
+                    const letterDiv = document.createElement('div');
+                    letterDiv.className = 'letter-box';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = '1';
+                    input.autocomplete = 'off';
+                    input.setAttribute('aria-label', `输入第${letterBoxesContainer.children.length + 1}个字母`);
+                    input.addEventListener('input', function() {
+                        // 自动跳转到下一个输入框
+                        if (this.value.length === 1) {
+                            const nextInput = this.parentElement.nextElementSibling?.querySelector('input');
+                            if (nextInput && !nextInput.disabled) {
+                                nextInput.focus();
+                            }
+                        }
+                    });
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Backspace' && this.value === '') {
+                            const prevInput = this.parentElement.previousElementSibling?.querySelector('input');
+                            if (prevInput && !prevInput.disabled) {
+                                prevInput.focus();
+                            }
+                        }
+                    });
+                    letterDiv.appendChild(input);
+                    letterBoxesContainer.appendChild(letterDiv);
+                }
+            }
+
+            // Focus on the first input box
+            setTimeout(() => {
+                const firstInput = letterBoxesContainer.querySelector('input');
+                if (firstInput) firstInput.focus();
+            }, 100);
+        }
+
+        function submitDictationAnswer() {
+            const currentWord = dictationWords[currentWordIndex];
+            const letterBoxesContainer = document.getElementById('letter-boxes');
+            const feedbackElement = document.getElementById('dictation-feedback');
+            const inputs = letterBoxesContainer.querySelectorAll('input');
+            let userWord = '';
+            inputs.forEach(input => {
+                userWord += input.value.trim().toLowerCase();
+            });
+            const correctWord = currentWord.word.toLowerCase();
+
+            if (userWord === correctWord) {
+                // 正确
+                feedbackElement.textContent = '正确！';
+                feedbackElement.style.color = '#004085';
+                correctCount++;
+                // 标记单词为已掌握
+                markWordAsLearned(currentWord.word);
+            } else {
+                // 错误
+                feedbackElement.textContent = `错误！正确答案：${currentWord.word}`;
+                feedbackElement.style.color = '#721c24';
+                incorrectCount++;
+                incorrectWords.push({ word: currentWord.word, meaning: currentWord.meaning });
+            }
+
+            // 自动跳转到下一个单词
+            setTimeout(() => {
+                currentWordIndex++;
+                displayCurrentDictationWord();
+            }, 1500); // 等待1.5秒后自动跳转
+        }
+
+        function skipDictationWord() {
+            const currentWord = dictationWords[currentWordIndex];
+            // 标记单词为未掌握
+            markWordAsNotLearned(currentWord.word);
+            skippedCount++;
+            // 自动跳转到下一个单词
+            setTimeout(() => {
+                currentWordIndex++;
+                displayCurrentDictationWord();
+            }, 500); // 等待0.5秒后自动跳转
+        }
+
+        function stopDictation() {
+            if (currentDictationUnit === '') return;
+            showSummary();
+            resetDictation();
+        }
+
+        function resetDictation() {
+            currentDictationUnit = '';
+            dictationWords = [];
+            currentWordIndex = 0;
+            correctCount = 0;
+            incorrectCount = 0;
+            skippedCount = 0;
+            incorrectWords = [];
+            document.getElementById('dictation-question').style.display = 'none';
+            document.getElementById('dictation-input').style.display = 'none';
+            document.getElementById('dictation-feedback').textContent = '';
+            document.getElementById('letter-boxes').innerHTML = '';
+            // 更新按钮状态
+            document.getElementById('stop-dictation').disabled = true;
+            document.getElementById('start-dictation').disabled = false;
+        }
+
+        // ~~~ 显示总结弹窗 ~~~
+        function showSummary() {
+            const summaryModal = document.getElementById('summary-modal');
+            const summaryText = document.getElementById('summary-text');
+            const incorrectList = document.getElementById('incorrect-list');
+
+            summaryText.textContent = `您完成了本单元的默写！\n正确：${correctCount}，错误：${incorrectCount}，跳过：${skippedCount}。`;
+
+            // 清除之前的错误列表
+            incorrectList.innerHTML = '';
+
+            if (incorrectWords.length > 0) {
+                incorrectWords.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = `- ${item.meaning} : ${item.word}`;
+                    incorrectList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = '恭喜！没有错误！';
+                incorrectList.appendChild(li);
+            }
+
+            summaryModal.style.display = 'flex';
+        }
+
+        function closeSummary() {
+            const summaryModal = document.getElementById('summary-modal');
+            summaryModal.style.display = 'none';
+        }
+
+        // ~~~ 初始化函数 ~~~
         function init() {
             // 给单选按钮加事件：监听用户对发音的切换
             document.querySelectorAll('input[name="accent"]').forEach(radio => {
@@ -1135,6 +1620,46 @@
 
             // 更新学习进度
             updateProgress();
+
+            // 默写检查功能绑定
+            const startButton = document.getElementById('start-dictation');
+            const stopButton = document.getElementById('stop-dictation');
+            const submitButton = document.getElementById('submit-answer');
+            const skipButton = document.getElementById('skip-word');
+            const resetButton = document.getElementById('reset-learned');
+
+            startButton.addEventListener('click', () => {
+                const selectedUnit = document.getElementById('dictation-unit').value;
+                if (!selectedUnit) {
+                    alert('请选择一个单元进行默写。');
+                    return;
+                }
+                startDictation(selectedUnit);
+            });
+
+            stopButton.addEventListener('click', () => {
+                const confirmStop = confirm('您确定要停止默写吗？');
+                if (confirmStop) {
+                    stopDictation();
+                }
+            });
+
+            submitButton.addEventListener('click', submitDictationAnswer);
+            skipButton.addEventListener('click', skipDictationWord);
+
+            // 重置所有已掌握单词功能绑定
+            resetButton.addEventListener('click', resetAllLearnedWords);
+
+            // 事件委托：为所有单元的表格添加点击事件以处理朗读按钮
+            Object.keys(units).forEach(unitId => {
+                const table = document.getElementById(`${unitId}-table`);
+                table.addEventListener('click', function(event) {
+                    if (event.target && event.target.matches('button.btn-speak')) {
+                        const word = event.target.closest('.word-cell').querySelector('.word').textContent;
+                        speakText(word);
+                    }
+                });
+            });
         }
 
         // 调用初始化函数
