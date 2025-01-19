@@ -579,7 +579,9 @@
             transition: width 0.5s ease-in-out;
         }
 
-        /* ========== 响应式调整：手机端默写检查模块 ========== */
+        /* ========== 响应式调整：手机端默写检查模块 ==========
+             增强触控友好性，按钮更大，水平排列，增加间距
+        */
         @media (max-width: 600px) {
             /* 调整默写控制区域的布局方向为纵向 */
             .dictation-controls {
@@ -603,16 +605,17 @@
 
             /* 调整默写输入区域的布局 */
             .dictation-input .dictation-controls {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
+                flex-direction: row; /* 改为水平排列 */
+                align-items: center;
+                justify-content: space-between;
+                gap: 20px; /* 增加按钮之间的间距 */
             }
 
-            /* 让提交和跳过按钮占据全部宽度 */
+            /* 让提交和跳过按钮占据适当宽度 */
             .dictation-input .dictation-controls button {
-                width: 100%;
-                font-size: 14px;
-                padding: 8px 10px;
+                width: 48%; /* 两个按钮各占48%，留出间距 */
+                font-size: 16px;
+                padding: 12px 0;
             }
 
             /* 调整字母输入框的大小 */
