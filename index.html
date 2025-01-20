@@ -338,7 +338,6 @@
             text-align: center;
         }
 
-
         .dictation-controls select,
         .dictation-controls button {
             text-align: center;       /* 居中选择框中显示的文字 */
@@ -769,6 +768,19 @@
                 padding: 10px;
                 font-size: 14px;
             }
+
+            /* 新增：调整默写模块的按钮区域为横向排列 */
+            .dictation-actions {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                width: 100%;
+                gap: 10px;
+            }
+
+            .dictation-actions button {
+                flex: 1; /* 让按钮均分可用空间 */
+            }
         }
     </style>
 </head>
@@ -824,7 +836,8 @@
             <div class="letter-boxes" id="letter-boxes">
                 <!-- 输入框将在JavaScript中生成 -->
             </div>
-            <div class="dictation-controls">
+            <!-- 修改：添加新的类名 "dictation-actions" -->
+            <div class="dictation-actions">
                 <button id="submit-answer" aria-label="提交答案">提交</button>
                 <button id="skip-word" aria-label="跳过单词">跳过</button>
             </div>
@@ -1075,7 +1088,7 @@
                 {word: "flag", pronunciation: "/flæɡ/", meaning: "旗帜"},
                 {word: "square", pronunciation: "/skweə(r)/", meaning: "广场；正方形"},
                 {word: "side", pronunciation: "/saɪd/", meaning: "一侧，一边"},
-                {word: "courtyard", pronunciation: "/ˈkɔːtjɑːd/", meaning: "庭院，天井"},
+                {word: "courtyard", pronunciation: "/ˈkɔːntrɑːd/", meaning: "庭院，天井"},
                 {word: "taste", pronunciation: "/teɪst/", meaning: "体验；尝味"},
                 {word: "local", pronunciation: "/ˈləʊkl/", meaning: "当地的，地方的"},
                 {word: "theatre", pronunciation: "/ˈθɪətə(r)/", meaning: "戏院，剧场"},
