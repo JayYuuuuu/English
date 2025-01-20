@@ -431,7 +431,7 @@
             position: fixed;
             bottom: 20px; 
             right: 20px;  
-            background-color: rgba(255, 255, 255, 0.1); 
+            background-color: rgba(255, 255, 255, 0); 
             padding: 10px 15px;
             border-radius: 8px;
             z-index: 1000;
@@ -439,6 +439,7 @@
             transition: background-color var(--transition-duration), transform var(--transition-duration);
             max-height: 90vh; /* 可选：设置最大高度 */
             overflow-y: auto;  /* 可选：启用垂直滚动 */
+            border: none; /* 去掉边框 */
         }
 
         .floating-nav:hover {
@@ -611,13 +612,13 @@
         }
 
         .reset-button button {
-            background-color: #000000;
+            background-color: var(--primary-color);
             color: #fff;
             transition: background-color var(--transition-duration), transform var(--transition-duration);
         }
 
         .reset-button button:hover {
-            background-color: #1600e0;
+            background-color: #0056b3;
             transform: scale(1.05);
         }
 
@@ -934,7 +935,6 @@
     
     <!-- ================= 悬浮导航条（已缩小50%） ================= -->
     <div class="floating-nav">
-        <h3>导航</h3>
         <a href="#dictation">默写</a> <!-- 新增的默写链接 -->
         <a href="#unit1">U1</a>
         <a href="#unit2">U2</a>
