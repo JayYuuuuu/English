@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>单词打印页（Unit1 ~ Unit8）</title>
+    <style>
+        /* A4纸，四边预留20mm边距 */
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9; /* 设置整体背景色 */
+        }
+        /* 容器：使用Flex布局，垂直排列单元节 */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px;
+        }
+        /* 单元节 */
+        .unit-section {
+            width: 100%;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-sizing: border-box;
+            display: flex; /* 设为Flex布局 */
+            flex-direction: row; /* 水平排列 */
+            flex-wrap: wrap; /* 允许换行 */
+            justify-content: flex-start; /* 左对齐 */
+            background-color: #ffffff; /* 设置单元节的背景色为白色 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 添加轻微阴影 */
+        }
+        /* 单词盒子样式：一行放8个 */
+        .word-box {
+            flex: 0 0 calc(12.5% - 10px); /* 每个盒子占12.5%，减去边距 */
+            box-sizing: border-box;
+            margin: 5px;
+            perspective: 1000px; /* 为3D效果提供透视 */
+            transition: transform 0.1s; /* 添加过渡效果 */
+            border-radius: 5px;
+            /* 移除默认背景颜色 */
+            background-color: transparent;
+        }
+       /* 鼠标悬停时，改变前面背景颜色和文字颜色，卡片略微放大 */
+        .word-box:hover .flip-card-front,
+        .word-box:hover .flip-card-back {
+            background-color: #2c2c2c; /* 背景颜色 */
+            color: #ffffff; /* 文字颜色 */
+        }
+
+        /* 鼠标悬停时，卡片和文字一起放大 */
+        .word-box:hover {
+            transform: scale(1.05); /* 略微放大卡片 */
+            transition: transform 0.1s ease; /* 平滑过渡效果 */
+        }
+
+        /* 文字初始颜色 */
+        .flip-card-front * {
+            transition: color 0.1s ease, background-color 0.1s ease; /* 文字颜色和背景颜色的过渡 */
+        }
+
+        /* 卡片初始颜色 */
+        .flip-card-front {
+            background-color: #ffffff; /* 卡片正面的背景色 */
+        }
+
+        /* 卡片背面初始颜色 */
+        .flip-card-back {
+            background-color: #ffffff; /* 卡片背面的背景色 */
+            color: #333333; /* 背面的文字颜色 */
+        }
+
+        /* 翻转卡片容器 */
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            height: 150px;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+        }
+        /* 翻转卡片内部 */
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        /* 翻转效果 */
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        /* 卡片前面和背面 */
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border: 1px solid #ececec;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            /* 前面默认无背景色，文字为黑色 */
+            background-color: transparent;
+            color: #000000;
+            transition: background-color 0.1s, color 0.1s;
+        }
+        .flip-card-front {
+            /* 背景色和文字颜色通过:hover控制 */
+        }
+        .flip-card-back {
+            background-color: #000000; /* 背面背景色为白色 */
+            color: #ffffff; /* 背面文字为黑色 */
+            transform: rotateY(180deg);
+        }
+        .word {
+            font-weight: bold;
+            margin-bottom: 10px;
+            transition: color 0.1s;
+        }
+        .pronunciation {
+            font-style: italic;
+            color: inherit; /* 让读音颜色继承父元素 */
+            margin-bottom: 5px;
+        }
+        .meaning {
+            color: inherit; /* 让中文释义颜色继承父元素 */
+            font-size: 16px;
+            font-weight: bold; /* 加粗中文释义 */
+        }
+        /* 打印时样式 */
+        @media print {
+            body {
+                font-size: 12pt;
+                background-color: #ffffff; /* 打印时背景色为白色 */
+            }
+            .container {
+                justify-content: flex-start;
+            }
+            .word-box {
+                page-break-inside: avoid;
+                margin: 2mm;
+            }
+            .flip-card-inner {
+                transform: rotateY(0deg) !important; /* 默认展示前面 */
+            }
+            .flip-card-back {
+                display: none; /* 隐藏背面内容 */
+            }
+            /* 隐藏搜索框和切换按钮 */
+            #search-container, #toggle-container {
+                display: none;
+            }
+        }
+        /* 添加内边距和圆角使界面更美观 */
+        .unit-section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        /* 搜索框和切换按钮样式 */
+        #search-container, #toggle-container {
+            width: 100%;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #search-input {
+            width: 40%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: border-color 0.1s;
+        }
+        #search-input:focus {
+            border-color: #00796b; /* 聚焦时改变边框颜色 */
+            outline: none;
+        }
+        #toggle-button {
+            margin-left: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #00796b;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        #toggle-button:hover {
+            background-color: #005f56;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .word-box {
+                flex: 0 0 calc(16.66% - 10px); /* 6 per row */
+            }
+            #search-input {
+                width: 50%;
+            }
+        }
+        @media (max-width: 900px) {
+            .word-box {
+                flex: 0 0 calc(25% - 10px); /* 4 per row */
+            }
+            #search-input {
+                width: 70%;
+            }
+            #toggle-button {
+                margin-left: 10px;
+                margin-top: 10px;
+            }
+        }
+        @media (max-width: 600px) {
+            .word-box {
+                flex: 0 0 calc(50% - 10px); /* 2 per row */
+            }
+            #search-input {
+                width: 90%;
+            }
+            #toggle-button {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 搜索功能和切换按钮 -->
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="搜索单词..." />
+    </div>
+    <div id="toggle-container">
+        <button id="toggle-button">切换到中文模式</button>
+    </div>
+
+    <div class="container" id="word-container">
+        <!-- 单词盒子将通过JavaScript动态生成 -->
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 单词数据
+            const units = [
+                {
+                    unit: 1,
+                    words: [
+                        { word: "cottage", pronunciation: "/ˈkɒtɪdʒ/", meaning: "n. （尤指）村舍，小别墅" },
+                        { word: "farmhouse", pronunciation: "/ˈfɑːmhaʊs/", meaning: "n. 农场住宅，农舍" },
+                        { word: "mobile", pronunciation: "/ˈməʊbaɪl/", meaning: "adj. 可移动的" },
+                        { word: "mobile home", pronunciation: "/ˈməʊbaɪl həʊm/", meaning: "n. 活动住房" },
+                        { word: "town", pronunciation: "/taʊn/", meaning: "n. 镇，市镇" },
+                        { word: "town house", pronunciation: "/taʊn haʊs/", meaning: "n. 联排式住宅" },
+                        { word: "west", pronunciation: "/west/", meaning: "n., adj. & adv. 西方；西方的；向西" },
+                        { word: "hundred", pronunciation: "/ˈhʌndrəd/", meaning: "num. 许多，大量；一百" },
+                        { word: "study", pronunciation: "/ˈstʌdi/", meaning: "n. 书房" },
+                        { word: "relaxing", pronunciation: "/rɪˈlæksɪŋ/", meaning: "adj. 令人放松的，轻松的" },
+                        { word: "bedroom", pronunciation: "/ˈbedruːm/", meaning: "n. 卧室" },
+                        { word: "own", pronunciation: "/əʊn/", meaning: "adj. & pron. 自己的；本人的" },
+                        { word: "south", pronunciation: "/saʊθ/", meaning: "n., adj. & adv. 南方；南方的；向南" },
+                        { word: "balcony", pronunciation: "/ˈbælkəni/", meaning: "n. 阳台" },
+                        { word: "view", pronunciation: "/vjuː/", meaning: "n. 风景；看法" },
+                        { word: "mile", pronunciation: "/maɪl/", meaning: "n. 英里" },
+                        { word: "relax", pronunciation: "/rɪˈlæks/", meaning: "vi. 放松，休息" },
+                        { word: "living room", pronunciation: "/ˈlɪvɪŋ ruːm/", meaning: "n. 客厅，起居室" },
+                        { word: "ahlan", pronunciation: "/ˈɑːhlən/", meaning: "你好（阿拉伯语问候语）" },
+                        { word: "village", pronunciation: "/ˈvɪlɪdʒ/", meaning: "n. 村庄，村镇" },
+                        { word: "carpet", pronunciation: "/ˈkɑːpɪt/", meaning: "n. 地毯" },
+                        { word: "next to", pronunciation: "/nɛkst tuː/", meaning: "prep. 紧邻，在……近旁" },
+                        { word: "yard", pronunciation: "/jɑːd/", meaning: "n. 院子" },
+                        { word: "hen", pronunciation: "/hen/", meaning: "n. 母鸡" },
+                        { word: "collect", pronunciation: "/kəˈlekt/", meaning: "vt. 收集，采集" },
+                        { word: "firework", pronunciation: "/ˈfaɪəwɜːk/", meaning: "n. 烟火，烟花" },
+                        { word: "BBQ", pronunciation: "/ˈbɑːbɪkjuː/", meaning: "abbr. 烧烤；烤架" },
+                        { word: "zero", pronunciation: "/ˈzɪərəʊ/", meaning: "num. 零" },
+                        { word: "square", pronunciation: "/skweə(r)/", meaning: "adj. 平方" },
+                        { word: "metre", pronunciation: "/ˈmiːtə(r)/", meaning: "n. （AmE meter）米" },
+                        { word: "square metre", pronunciation: "/skweər ˈmiːtə(r)/", meaning: "n. 平方米" },
+                        { word: "number", pronunciation: "/ˈnʌmbə(r)/", meaning: "n. 号码；数字；数量" },
+                        { word: "million", pronunciation: "/ˈmɪljən/", meaning: "num. 一百万" },
+                        { word: "calendar", pronunciation: "/ˈkælɪndə(r)/", meaning: "n. 历法；日历" },
+                        { word: "lunar calendar", pronunciation: "/ˈluːnə(r) ˈkælɪndə(r)/", meaning: "n. 农历，阴历" },
+                        { word: "seaside", pronunciation: "/ˈsiːsaɪd/", meaning: "n. 海边，海滨" },
+                        { word: "east", pronunciation: "/iːst/", meaning: "n., adj. & adv. 东方；东方的；向东" },
+                        { word: "stone", pronunciation: "/stəʊn/", meaning: "n. 石头；石块" },
+                        { word: "seagrass", pronunciation: "/ˈsiːɡrɑːs/", meaning: "n. 海草" },
+                        { word: "hold", pronunciation: "/həʊld/", meaning: "vi. 承受住；坚持住" },
+                        { word: "hold up", pronunciation: "/həʊld ʌp/", meaning: "v. 支撑，延迟" },
+                        { word: "wind", pronunciation: "/wɪnd/", meaning: "n. 风；气流" },
+                        { word: "south-west", pronunciation: "/saʊθ ˈwest/", meaning: "n., adj. & adv. 西南方；西南方的；向西南方" },
+                        { word: "bamboo", pronunciation: "/bæmˈbuː/", meaning: "n. 竹；竹子" },
+                        { word: "ground floor", pronunciation: "/ɡraʊnd flɔːr/", meaning: "n. 底层；一楼" },
+                        { word: "grassland", pronunciation: "/ˈɡrɑːslænd/", meaning: "n. 草原；草地；草场" },
+                        { word: "north", pronunciation: "/nɔːθ/", meaning: "n., adj. & adv. 北方；北方的；向北" },
+                        { word: "tent", pronunciation: "/tent/", meaning: "n. 帐篷" },
+                        { word: "wood", pronunciation: "/wʊd/", meaning: "n. 木；木头" },
+                        { word: "build", pronunciation: "/bɪld/", meaning: "vi. & vt. 建筑；建造" },
+                        { word: "fishing", pronunciation: "/ˈfɪʃɪŋ/", meaning: "n. 钓鱼；捕鱼业（或活动）" },
+                        { word: "dry", pronunciation: "/draɪ/", meaning: "adj. 干燥的；干的" },
+                        { word: "ride", pronunciation: "/raɪd/", meaning: "vt. & vi. 骑；驾驶；搭乘" },
+                        { word: "centre", pronunciation: "/ˈsentə(r)/", meaning: "n. （AmE center）市镇的中心区；中心" },
+                        { word: "bathroom", pronunciation: "/ˈbɑːθruːm/", meaning: "n. 浴室；（美）卫生间" },
+                        { word: "smell", pronunciation: "/smel/", meaning: "vt. 闻；嗅（气味）" },
+                        { word: "sky", pronunciation: "/skaɪ/", meaning: "n. 天空" }
+                    ]
+                },
+                {
+                    unit: 2,
+                    words: [
+                        { word: "neighbourhood", pronunciation: "/ˈneɪbəhʊd/", meaning: "n. 街区，邻近的地方（美 neighborhood）" },
+                        { word: "officer", pronunciation: "/ˈɒfɪsə(r)/", meaning: "n. 高级职员，官员" },
+                        { word: "police officer", pronunciation: "/pəˈliːs ˈɒfɪsər/", meaning: "n. 警察，警员" },
+                        { word: "station", pronunciation: "/ˈsteɪʃn/", meaning: "n. 站，所，局" },
+                        { word: "police station", pronunciation: "/pəˈliːs ˈsteɪʃn/", meaning: "n. 警察局，派出所" },
+                        { word: "restaurant", pronunciation: "/ˈrestrɒnt/", meaning: "n. 餐厅，饭馆" },
+                        { word: "neighbour", pronunciation: "/ˈneɪbə(r)/", meaning: "n. 邻居（美 neighbor）" },
+                        { word: "above", pronunciation: "/əˈbʌv/", meaning: "prep. 在……上面；adv. 在上面" },
+                        { word: "lawyer", pronunciation: "/ˈlɔɪə(r)/", meaning: "n. 律师" },
+                        { word: "law", pronunciation: "/lɔː/", meaning: "n. 法律，法规；规则" },
+                        { word: "community", pronunciation: "/kəˈmjuːnəti/", meaning: "n. 社区" },
+                        { word: "from time to time", pronunciation: "/frɒm taɪm tuː taɪm/", meaning: "偶尔，不时" },
+                        { word: "volunteer", pronunciation: "/ˌvɒlənˈtɪə(r)/", meaning: "n. 志愿者；vt.&vi. 自愿做" },
+                        { word: "laptop", pronunciation: "/ˈlæptɒp/", meaning: "n. 笔记本电脑" },
+                        { word: "engineer", pronunciation: "/ˌendʒɪˈnɪə(r)/", meaning: "n. 工程师" },
+                        { word: "check", pronunciation: "/tʃek/", meaning: "vt.&n. 检查，核查" },
+                        { word: "broken", pronunciation: "/ˈbrəʊkən/", meaning: "adj. 出了毛病的，破损的" },
+                        { word: "someone", pronunciation: "/ˈsʌmwʌn/", meaning: "pron. 某人" },
+                        { word: "repair", pronunciation: "/rɪˈpeə(r)/", meaning: "vt.&n. 修理" },
+                        { word: "anyone", pronunciation: "/ˈeniwʌn/", meaning: "pron. 任何人" },
+                        { word: "college", pronunciation: "/ˈkɒlɪdʒ/", meaning: "n. 学院，（美）大学" },
+                        { word: "willing", pronunciation: "/ˈwɪlɪŋ/", meaning: "adj. 愿意的，乐意的" },
+                        { word: "be willing to do sth", pronunciation: "/bi ˈwɪlɪŋ tuː duː sʌmθɪŋ/", meaning: "乐意做某事" },
+                        { word: "tidy", pronunciation: "/ˈtaɪdi/", meaning: "vt.&vi. 整理，收拾" },
+                        { word: "such", pronunciation: "/sʌtʃ/", meaning: "det.&pron. 如此，这样的" },
+                        { word: "any time", pronunciation: "/ˈeni taɪm/", meaning: "adv. 在任何时候" },
+                        { word: "pick up", pronunciation: "/pɪk ʌp/", meaning: "v. 检起，拾起；学习" },
+                        { word: "rubbish", pronunciation: "/ˈrʌbɪʃ/", meaning: "n. 垃圾，废弃物" },
+                        { word: "bench", pronunciation: "/bentʃ/", meaning: "n. 长椅" },
+                        { word: "if", pronunciation: "/ɪf/", meaning: "conj. 如果" },
+                        { word: "in a hurry", pronunciation: "/ɪn ə ˈhʌri/", meaning: "匆忙" },
+                        { word: "anything", pronunciation: "/ˈeniθɪŋ/", meaning: "pron. 任何事物" },
+                        { word: "invite", pronunciation: "/ɪnˈvaɪt/", meaning: "vt. 邀请" },
+                        { word: "exchange", pronunciation: "/ɪksˈtʃeɪndʒ/", meaning: "n. 交流" },
+                        { word: "exchange student", pronunciation: "/ɪksˈtʃeɪndʒ ˈstjuːdənt/", meaning: "n. 交换生" },
+                        { word: "notice", pronunciation: "/ˈnəʊtɪs/", meaning: "n. 通知" },
+                        { word: "information", pronunciation: "/ˌɪnfəˈmeɪʃn/", meaning: "n. 信息，消息" },
+                        { word: "below", pronunciation: "/bɪˈləʊ/", meaning: "adv. 在下面；prep. 在……下面" },
+                        { word: "fever", pronunciation: "/ˈfiːvə(r)/", meaning: "n. 发烧，狂热" },
+                        { word: "sore", pronunciation: "/sɔː(r)/", meaning: "adj. （发炎）疼痛的，酸痛的" },
+                        { word: "throat", pronunciation: "/θrəʊt/", meaning: "n. 咽喉，喉咙" },
+                        { word: "trouble", pronunciation: "/ˈtrʌbl/", meaning: "n. 问题，困难；麻烦；vt. 使烦恼" },
+                        { word: "machine", pronunciation: "/məˈʃiːn/", meaning: "n. 机器，机械装置" },
+                        { word: "washing machine", pronunciation: "/ˈwɒʃɪŋ məˈʃiːn/", meaning: "洗衣机" },
+                        { word: "fridge", pronunciation: "/frɪdʒ/", meaning: "n. 冰箱（refrigerator）" },
+                        { word: "deal with", pronunciation: "/diːl wɪð/", meaning: "处理，应付" },
+                        { word: "wonder", pronunciation: "/ˈwʌndə(r)/", meaning: "vt.&vi. 琢磨，想知道" },
+                        { word: "able", pronunciation: "/ˈeɪbl/", meaning: "adj. 能够" },
+                        { word: "post", pronunciation: "/pəʊst/", meaning: "vt. 发布；n. 帖子" },
+                        { word: "raise", pronunciation: "/reɪz/", meaning: "vt. 筹募" },
+                        { word: "organize", pronunciation: "/ˈɔːɡənaɪz/", meaning: "vt. 组织；安排" },
+                        { word: "give away", pronunciation: "/ɡɪv əˈweɪ/", meaning: "赠送，分发" }
+                    ]
+                },
+                {
+                    unit: 3,
+                    words: [
+                        { word: "kilometre", pronunciation: "/ˈkɪləmiːtə(r)/", meaning: "n. 千米（美 kilometer）" },
+                        { word: "wonder", pronunciation: "/ˈwʌndə(r)/", meaning: "n. 奇迹，奇观；惊奇" },
+                        { word: "Olympic", pronunciation: "/əˈlɪmpɪk/", meaning: "adj. 奥林匹克运动会的" },
+                        { word: "object", pronunciation: "/ˈɒbdʒɪkt/", meaning: "n. 物品，东西" },
+                        { word: "past", pronunciation: "/pɑːst/", meaning: "n. 过去" },
+                        { word: "present", pronunciation: "/ˈpreznt/", meaning: "n. 现在" },
+                        { word: "shall", pronunciation: "/ʃæl/", meaning: "modal v. 将要；将会" },
+                        { word: "attract", pronunciation: "/əˈtrækt/", meaning: "vt. 招引，吸引" },
+                        { word: "capital", pronunciation: "/ˈkæpɪtl/", meaning: "n. 首都，首府" },
+                        { word: "show sb around", pronunciation: "/ʃoʊ sb əˈraʊnd/", meaning: "领某人参观" },
+                        { word: "once", pronunciation: "/wʌns/", meaning: "adv. 曾经" },
+                        { word: "palace", pronunciation: "/ˈpæləs/", meaning: "n. 宫殿" },
+                        { word: "emperor", pronunciation: "/ˈempərə(r)/", meaning: "n. 皇帝" },
+                        { word: "ancient", pronunciation: "/ˈeɪnʃənt/", meaning: "adj. 古代的" },
+                        { word: "treasure", pronunciation: "/ˈtreʒə(r)/", meaning: "n. 珍宝，珍品；财富" },
+                        { word: "worth", pronunciation: "/wɜːθ/", meaning: "adj. 值得；值……钱" },
+                        { word: "be well worth", pronunciation: "/bi wɛl wɜːθ/", meaning: "很值得" },
+                        { word: "visitor", pronunciation: "/ˈvɪzɪtə(r)/", meaning: "n. 游客，来访者" },
+                        { word: "raise", pronunciation: "/reɪz/", meaning: "vt. 提升，举起；提高" },
+                        { word: "national", pronunciation: "/ˈnæʃnəl/", meaning: "adj. 国家的" },
+                        { word: "flag", pronunciation: "/flæɡ/", meaning: "n. 旗" },
+                        { word: "square", pronunciation: "/skweə(r)/", meaning: "n. 正方形；广场" },
+                        { word: "side", pronunciation: "/saɪd/", meaning: "n. 一侧，一边" },
+                        { word: "courtyard", pronunciation: "/ˈkɔːtjɑːd/", meaning: "n. 庭院，天井" },
+                        { word: "taste", pronunciation: "/teɪst/", meaning: "n. 体验，尝试；味道" },
+                        { word: "local", pronunciation: "/ˈləʊkl/", meaning: "adj. 当地的，地方的" },
+                        { word: "theatre", pronunciation: "/ˈθɪətə(r)/", meaning: "n. 剧院，剧场" },
+                        { word: "interest", pronunciation: "/ˈɪntrəst/", meaning: "n. 吸引力，趣味；兴趣" },
+                        { word: "place of interest", pronunciation: "/pleɪs əv ˈɪntrəst/", meaning: "n. 名胜" },
+                        { word: "form", pronunciation: "/fɔːm/", meaning: "n. 类型，种类；形式" },
+                        { word: "stadium", pronunciation: "/ˈsteɪdiəm/", meaning: "n. 体育场，运动场" },
+                        { word: "date from", pronunciation: "/deɪt frɒm/", meaning: "追溯到，始于" },
+                        { word: "shopkeeper", pronunciation: "/ˈʃɒpkiːpə(r)/", meaning: "n. 店主" },
+                        { word: "smile", pronunciation: "/smaɪl/", meaning: "vi. 微笑；vt. 微笑着说；n. 微笑" },
+                        { word: "sandwich", pronunciation: "/ˈsænwɪtʃ/", meaning: "n. 三明治" },
+                        { word: "leaf", pronunciation: "/liːf/", meaning: "n. (pl. leaves) 叶子" },
+                        { word: "wave", pronunciation: "/weɪv/", meaning: "vi. 飘动；vt.&vi. 挥手；n. 波浪" },
+                        { word: "roof", pronunciation: "/ruːf/", meaning: "n. 屋顶" },
+                        { word: "cage", pronunciation: "/keɪdʒ/", meaning: "n. 笼子" },
+                        { word: "lie", pronunciation: "/laɪ/", meaning: "vi. 躺，平卧；位于" },
+                        { word: "row", pronunciation: "/rəʊ/", meaning: "vt.&vi. 划（船）" },
+                        { word: "high", pronunciation: "/haɪ/", meaning: "adj. 有某高度的；adv. 高" },
+                        { word: "golden", pronunciation: "/ˈɡəʊldən/", meaning: "adj. 金色的，美好的" },
+                        { word: "shape", pronunciation: "/ʃeɪp/", meaning: "n. 形状" },
+                        { word: "recommend", pronunciation: "/ˌrekəˈmend/", meaning: "vt. 推荐，建议" },
+                        { word: "tower", pronunciation: "/ˈtaʊə(r)/", meaning: "n. 塔" },
+                        { word: "along", pronunciation: "/əˈlɒŋ/", meaning: "prep. 沿着" },
+                        { word: "take in", pronunciation: "/teɪk ɪn/", meaning: "v. 吸入，接纳，理解" },
+                        { word: "sunset", pronunciation: "/ˈsʌnset/", meaning: "n. 日落，傍晚" },
+                        { word: "fantastic", pronunciation: "/fænˈtæstɪk/", meaning: "adj. 极好的，了不起的" },
+                        { word: "fish and chips", pronunciation: "/fɪʃ ænd tʃɪps/", meaning: "n. 炸鱼薯条" },
+                        { word: "British", pronunciation: "/ˈbrɪtɪʃ/", meaning: "adj. 英国（人）的" },
+                        { word: "tool", pronunciation: "/tuːl/", meaning: "n. 工具" },
+                        { word: "end", pronunciation: "/end/", meaning: "n. 终止，结束；尽头" },
+                        { word: "set", pronunciation: "/set/", meaning: "vi. 落（下）" },
+                        { word: "everything", pronunciation: "/ˈevriθɪŋ/", meaning: "pron. 一切，每件事" },
+                        { word: "seem", pronunciation: "/siːm/", meaning: "linking v. 似乎，看起来" }
+                    ]
+                },
+                {
+                    unit: 4,
+                    words: [
+                        { word: "folk", pronunciation: "/fəʊk/", meaning: "adj. 传统民间的，民俗的" },
+                        { word: "china", pronunciation: "/ˈtʃaɪnə/", meaning: "n. 瓷器" },
+                        { word: "clay", pronunciation: "/kleɪ/", meaning: "n. 黏土，陶土" },
+                        { word: "teapot", pronunciation: "/ˈtiːpɒt/", meaning: "n. 茶壶" },
+                        { word: "taste", pronunciation: "/teɪst/", meaning: "linking v. 有……味道" },
+                        { word: "woodcarving", pronunciation: "/ˈwʊdˌkɑːvɪŋ/", meaning: "n. 木雕，木雕品" },
+                        { word: "even", pronunciation: "/ˈiːvn/", meaning: "adv. 甚至，即使" },
+                        { word: "carve", pronunciation: "/kɑːv/", meaning: "vt. & vi. 雕刻" },
+                        { word: "scene", pronunciation: "/siːn/", meaning: "n. 场面，现场；（戏剧等的）场" },
+                        { word: "craft", pronunciation: "/krɑːft/", meaning: "n. 手艺，工艺" },
+                        { word: "quickly", pronunciation: "/ˈkwɪkli/", meaning: "adv. 迅速地" },
+                        { word: "scissors", pronunciation: "/ˈsɪzəz/", meaning: "n. (pl.) 剪刀" },
+                        { word: "knife", pronunciation: "/naɪf/", meaning: "n. (pl. knives) 刀" },
+                        { word: "add", pronunciation: "/æd/", meaning: "vt. 补充说；添加" },
+                        { word: "practice", pronunciation: "/ˈpræktɪs/", meaning: "n. 练习，训练" },
+                        { word: "landscape", pronunciation: "/ˈlændskeɪp/", meaning: "n. 景色，风景画" },
+                        { word: "paper-cut", pronunciation: "/ˈpeɪpər kʌt/", meaning: "n. 剪纸（作品）" },
+                        { word: "express", pronunciation: "/ɪkˈspres/", meaning: "vt. 表达，表示" },
+                        { word: "happiness", pronunciation: "/ˈhæpinəs/", meaning: "n. 幸福，快乐" },
+                        { word: "couple", pronunciation: "/ˈkʌpl/", meaning: "n. 夫妇" },
+                        { word: "hand", pronunciation: "/hænd/", meaning: "vt. 交，递，给" },
+                        { word: "mean", pronunciation: "/miːn/", meaning: "vt. 表示……的意思，意味着" },
+                        { word: "alive", pronunciation: "/əˈlaɪv/", meaning: "adj. 活着，有活力" },
+                        { word: "warmth", pronunciation: "/wɔːmθ/", meaning: "n. 温暖" },
+                        { word: "still", pronunciation: "/stɪl/", meaning: "adv. 还是，仍然" },
+                        { word: "mine", pronunciation: "/maɪn/", meaning: "pron. 我的" },
+                        { word: "hers", pronunciation: "/hɜːz/", meaning: "pron. 她的" },
+                        { word: "yours", pronunciation: "/jɔːz/", meaning: "pron. 你的，您的，你们的" },
+                        { word: "ours", pronunciation: "/aʊəz/", meaning: "pron. 我们的" },
+                        { word: "theirs", pronunciation: "/ðeəz/", meaning: "pron. 他们（她们，它们）的" },
+                        { word: "his", pronunciation: "/hɪz/", meaning: "pron. 他的" },
+                        { word: "postcard", pronunciation: "/ˈpəʊstkɑːd/", meaning: "n. 明信片" },
+                        { word: "Chinese knot", pronunciation: "/ˈnaʊt/", meaning: "n. 中国结" },
+                        { word: "figure", pronunciation: "/ˈfɪɡə(r)/", meaning: "n. （人或动物的）雕像，塑像" },
+                        { word: "mould", pronunciation: "/məʊld/", meaning: "n. 模具" },
+                        { word: "simple", pronunciation: "/ˈsɪmpl/", meaning: "adj. 简单的；简朴的" },
+                        { word: "opera", pronunciation: "/ˈɒprə/", meaning: "n. 歌剧" },
+                        { word: "outdoor", pronunciation: "/ˈaʊtdɔː(r)/", meaning: "adj. 室外的，户外的" },
+                        { word: "ordinary", pronunciation: "/ˈɔːdnri/", meaning: "adj. 普通的，平常的" },
+                        { word: "everyday", pronunciation: "/ˈevrideɪ/", meaning: "adj. 日常的，每天的" },
+                        { word: "creative", pronunciation: "/kriˈeɪtɪv/", meaning: "adj. 有创造力的；创造性的" },
+                        { word: "craftsperson", pronunciation: "/ˈkrɑːftsˌpɜːsn/", meaning: "n. (pl. craftspeople) 工匠，手艺人" },
+                        { word: "respect", pronunciation: "/rɪˈspekt/", meaning: "vt. 尊敬，尊重" },
+                        { word: "spirit", pronunciation: "/ˈspɪrɪt/", meaning: "n. 精神" },
+                        { word: "handicraft", pronunciation: "/ˈhændɪkrɑːft/", meaning: "n. 手工艺品；手工艺" },
+                        { word: "basic", pronunciation: "/ˈbeɪsɪk/", meaning: "adj. 基本的，初级的" },
+                        { word: "cultural", pronunciation: "/ˈkʌltʃərəl/", meaning: "adj. 文化的" },
+                        { word: "value", pronunciation: "/ˈvæljuː/", meaning: "n. 价值" },
+                        { word: "inkstick", pronunciation: "/ˈɪŋkstɪk/", meaning: "n. 墨（条）" },
+                        { word: "among", pronunciation: "/əˈmʌŋ/", meaning: "prep. 在……中；之一" },
+                        { word: "largely", pronunciation: "/ˈlɑːdʒli/", meaning: "adv. 主要地，在很大程度上" }
+                    ]
+                },
+                {
+                    unit: 5,
+                    words: [
+                        { word: "bat", pronunciation: "/bæt/", meaning: "n. 蝙蝠" },
+                        { word: "butterfly", pronunciation: "/ˈbʌtəflaɪ/", meaning: "n. 蝴蝶" },
+                        { word: "honeybee", pronunciation: "/ˈhʌnɪbiː/", meaning: "n. 蜜蜂" },
+                        { word: "ant", pronunciation: "/ænt/", meaning: "n. 蚂蚁" },
+                        { word: "wing", pronunciation: "/wɪŋ/", meaning: "n. 翅膀，翼" },
+                        { word: "taste", pronunciation: "/teɪst/", meaning: "品，吃，喝" },
+                        { word: "awake", pronunciation: "/əˈweɪk/", meaning: "adj. 醒着" },
+                        { word: "up to", pronunciation: "/ʌp tuː/", meaning: "达到…；至多有" },
+                        { word: "insect", pronunciation: "/ˈɪnsekt/", meaning: "n. 昆虫" },
+                        { word: "lift", pronunciation: "/lɪft/", meaning: "举起" },
+                        { word: "times", pronunciation: "/taɪmz/", meaning: "倍" },
+                        { word: "weight", pronunciation: "/weɪt/", meaning: "n. 重量" },
+                        { word: "hole", pronunciation: "/həʊl/", meaning: "n. 孔，洞" },
+                        { word: "worker", pronunciation: "/ˈwɜːkə(r)/", meaning: "n. 工蜂；工人" },
+                        { word: "gram", pronunciation: "/ɡræm/", meaning: "n. 克" },
+                        { word: "honey", pronunciation: "/ˈhʌni/", meaning: "n. 蜂蜜" },
+                        { word: "snail", pronunciation: "/sneɪl/", meaning: "n. 蜗牛" },
+                        { word: "trick", pronunciation: "/trɪk/", meaning: "把戏" },
+                        { word: "stick", pronunciation: "/stɪk/", meaning: "n. 枝条" },
+                        { word: "bite", pronunciation: "/baɪt/", meaning: "v. 咬" },
+                        { word: "fight", pronunciation: "/faɪt/", meaning: "v. 打架" },
+                        { word: "look after", pronunciation: "/lʊk ˈɑːftər/", meaning: "v. 照料，照看" },
+                        { word: "fur", pronunciation: "/fɜːr/", meaning: "n. （动物的）软毛，毛皮" },
+                        { word: "purr", pronunciation: "/pɜːr/", meaning: "（猫）发出呼噜声" },
+                        { word: "forget", pronunciation: "/fəˈɡet/", meaning: "v. 忘记，遗忘" },
+                        { word: "lonely", pronunciation: "/ˈləʊnli/", meaning: "adj. 孤独的" },
+                        { word: "parrot", pronunciation: "/ˈpærət/", meaning: "n. 鹦鹉" },
+                        { word: "sound", pronunciation: "/saʊnd/", meaning: "n. 声音" },
+                        { word: "alone", pronunciation: "/əˈləʊn/", meaning: "adv. 独自，单独" },
+                        { word: "corner", pronunciation: "/ˈkɔːnə(r)/", meaning: "n. 角落，墙角，街角" },
+                        { word: "touch", pronunciation: "/tʌtʃ/", meaning: "v. 触摸，碰" },
+                        { word: "goldfish", pronunciation: "/ˈɡəʊldfɪʃ/", meaning: "n. 金鱼" },
+                        { word: "afraid", pronunciation: "/əˈfreɪd/", meaning: "adj. 担心，害怕" },
+                        { word: "giraffe", pronunciation: "/dʒɪˈrɑːf/", meaning: "n. 长颈鹿" },
+                        { word: "bone", pronunciation: "/bəʊn/", meaning: "n. 骨头" },
+                        { word: "neck", pronunciation: "/nek/", meaning: "n. 颈，脖子" },
+                        { word: "snake", pronunciation: "/sneɪk/", meaning: "n. 蛇" },
+                        { word: "tip", pronunciation: "/tɪp/", meaning: "n. 实用的提示" },
+                        { word: "human", pronunciation: "/ˈhjuːmən/", meaning: "n. 人" },
+                        { word: "radar", pronunciation: "/ˈreɪdɑː(r)/", meaning: "n. 雷达" },
+                        { word: "allow", pronunciation: "/əˈlaʊ/", meaning: "v. 使可能，允许" },
+                        { word: "safely", pronunciation: "/ˈseɪfli/", meaning: "adv. 安全地" },
+                        { word: "echo", pronunciation: "/ˈekəʊ/", meaning: "n. 回声" },
+                        { word: "cheer", pronunciation: "/tʃɪə(r)/", meaning: "欢呼，加油" },
+                        { word: "cheer (sb) up", pronunciation: "/tʃɪər səp/", meaning: "v. （使）变得高兴，振奋起来" },
+                        { word: "hard-working", pronunciation: "/ˌhɑːd ˈwɜːkɪŋ/", meaning: "adj. 辛勤的" },
+                        { word: "useful", pronunciation: "/ˈjuːsfl/", meaning: "adj. 有用的" },
+                        { word: "save", pronunciation: "/seɪv/", meaning: "v. 拯救，救助" },
+                        { word: "correct", pronunciation: "/kəˈrekt/", meaning: "adj. 正确的" },
+                        { word: "relationship", pronunciation: "/rɪˈleɪʃnʃɪp/", meaning: "n. 关系" },
+                        { word: "care for", pronunciation: "/keər fɔːr/", meaning: "v. 照料，关心" },
+                        { word: "guinea pig", pronunciation: "/ˈɡɪni pɪɡ/", meaning: "n. 天竺鼠" },
+                        { word: "round", pronunciation: "/raʊnd/", meaning: "adj. 圆形的" },
+                        { word: "name", pronunciation: "/neɪm/", meaning: "n. 命名" },
+                        { word: "loud", pronunciation: "/laʊd/", meaning: "adj. 大声的" },
+                        { word: "noise", pronunciation: "/nɔɪz/", meaning: "n. 声音，噪声" },
+                        { word: "down", pronunciation: "/daʊn/", meaning: "adj. 沮丧，情绪低落" }
+                    ]
+                },
+                {
+                    unit: 6,
+                    words: [
+                        { word: "ocean", pronunciation: "/ˈəʊʃən/", meaning: "n. 海洋" },
+                        { word: "cover", pronunciation: "/ˈkʌvə(r)/", meaning: "v. 覆盖，遮盖；n. 封面" },
+                        { word: "surface", pronunciation: "/ˈsɜːfɪs/", meaning: "n. 地面；表面" },
+                        { word: "desert", pronunciation: "/ˈdezət/", meaning: "n. 沙漠，荒漠" },
+                        { word: "forest", pronunciation: "/ˈfɒrɪst/", meaning: "n. 森林" },
+                        { word: "rock", pronunciation: "/rɒk/", meaning: "n. 岩石" },
+                        { word: "ground", pronunciation: "/ɡraʊnd/", meaning: "n. 地面" },
+                        { word: "plain", pronunciation: "/pleɪn/", meaning: "n. 平原" },
+                        { word: "flat", pronunciation: "/flæt/", meaning: "adj. 平坦的，平的" },
+                        { word: "land", pronunciation: "/lænd/", meaning: "n. 陆地，土地" },
+                        { word: "rise", pronunciation: "/raɪz/", meaning: "v. 发源，上升，提升" },
+                        { word: "fresh", pronunciation: "/freʃ/", meaning: "adj. 新鲜的，淡的，无盐的" },
+                        { word: "farming", pronunciation: "/ˈfɑːmɪŋ/", meaning: "n. 耕种，务农" },
+                        { word: "powerful", pronunciation: "/ˈpaʊəfl/", meaning: "adj. 强大的，强有力的" },
+                        { word: "flood", pronunciation: "/flʌd/", meaning: "n. 泛滥，淹没" },
+                        { word: "destroy", pronunciation: "/dɪˈstrɔɪ/", meaning: "v. 破坏，摧毁" },
+                        { word: "nothing", pronunciation: "/ˈnʌθɪŋ/", meaning: "pron. 没有任何东西" },
+                        { word: "mostly", pronunciation: "/ˈməʊstli/", meaning: "adv. 主要地，通常" },
+                        { word: "sand", pronunciation: "/sænd/", meaning: "n. 沙子，沙" },
+                        { word: "nobody", pronunciation: "/ˈnəʊbɒdi/", meaning: "pron. 没有任何人" },
+                        { word: "conditions", pronunciation: "/kənˈdɪʃənz/", meaning: "n. 条件，环境" },
+                        { word: "a few", pronunciation: "/ə fjuː/", meaning: "det. 一些，几个" },
+                        { word: "survive", pronunciation: "/səˈvaɪv/", meaning: "v. 生存，存活" },
+                        { word: "huge", pronunciation: "/hjuːdʒ/", meaning: "adj. 巨大的" },
+                        { word: "planet", pronunciation: "/ˈplænɪt/", meaning: "n. 行星" },
+                        { word: "be home to", pronunciation: "/biː həʊm tuː/", meaning: "是…的家园" },
+                        { word: "produce", pronunciation: "/prəˈdjuːs/", meaning: "v. 生产，制造" },
+                        { word: "oxygen", pronunciation: "/ˈɒksɪdʒən/", meaning: "n. 氧气" },
+                        { word: "breathe", pronunciation: "/briːð/", meaning: "v. 呼吸" },
+                        { word: "northern", pronunciation: "/ˈnɔːðən/", meaning: "adj. 北方的，北部的" },
+                        { word: "Arctic char", pronunciation: "/ˈɑːktɪk ˈʧɑːr/", meaning: "n. 红点鳟" },
+                        { word: "campfire", pronunciation: "/ˈkæmpfaɪə(r)/", meaning: "n. 篝火" },
+                        { word: "camp", pronunciation: "/kæmp/", meaning: "n. 露营" },
+                        { word: "corn", pronunciation: "/kɔːn/", meaning: "n. 谷物，玉米" },
+                        { word: "landform", pronunciation: "/ˈlændfɔːm/", meaning: "n. 地形，地貌" },
+                        { word: "rainbow", pronunciation: "/ˈreɪnboʊ/", meaning: "n. 彩虹" },
+                        { word: "treat", pronunciation: "/triːt/", meaning: "n. 乐事，款待；v. 款待" },
+                        { word: "north-west", pronunciation: "/ˈnɔːθwɛst/", meaning: "n., adj. & adv. 西北" },
+                        { word: "unusual", pronunciation: "/ʌnˈjuːʒʊəl/", meaning: "adj. 不寻常的，异常的" },
+                        { word: "sandstone", pronunciation: "/ˈsændstəʊn/", meaning: "n. 砂岩" },
+                        { word: "strange", pronunciation: "/streɪndʒ/", meaning: "adj. 奇怪的，陌生的" },
+                        { word: "form", pronunciation: "/fɔːm/", meaning: "v. 形成" },
+                        { word: "power", pronunciation: "/ˈpaʊə(r)/", meaning: "n. 能力，力量" },
+                        { word: "rainforest", pronunciation: "/ˈreɪnˌfɔːrɪst/", meaning: "n. 雨林" },
+                        { word: "waterfall", pronunciation: "/ˈwɔːtəfɔːl/", meaning: "n. 瀑布" },
+                        { word: "cloud", pronunciation: "/klaʊd/", meaning: "n. 云，云彩" },
+                        { word: "sunrise", pronunciation: "/ˈsʌnraɪz/", meaning: "n. 日出" },
+                        { word: "wonderland", pronunciation: "/ˈwʌndərlænd/", meaning: "n. 奇境，仙境" }
+                    ]
+                },
+                {
+                    unit: 7,
+                    words: [
+                        { word: "cycle", pronunciation: "/ˈsaɪkl/", meaning: "n. 骑自行车" },
+                        { word: "horse riding", pronunciation: "/hɔːs ˈraɪdɪŋ/", meaning: "n. 骑马" },
+                        { word: "skate", pronunciation: "/skeɪt/", meaning: "n. 滑冰，溜冰" },
+                        { word: "break", pronunciation: "/breɪk/", meaning: "n. 休息" },
+                        { word: "take a break", pronunciation: "/teɪk ə breɪk/", meaning: "休息" },
+                        { word: "balance", pronunciation: "/ˈbæləns/", meaning: "n. 平衡" },
+                        { word: "might", pronunciation: "/maɪt/", meaning: "n. 可能" },
+                        { word: "on one's own", pronunciation: "/ɒn wʌnz əʊn/", meaning: "独自，独立地" },
+                        { word: "ski", pronunciation: "/skiː/", meaning: "n. 滑雪" },
+                        { word: "would", pronunciation: "/wʊd/", meaning: "modal v. 将会， 就会" },
+                        { word: "experience", pronunciation: "/ɪkˈspɪərɪəns/", meaning: "n. 经历，经验" },
+                        { word: "set off", pronunciation: "/set ɔf/", meaning: "出发" },
+                        { word: "follow", pronunciation: "/ˈfɒləʊ/", meaning: "v. 跟随" },
+                        { word: "detail", pronunciation: "/ˈdiːteɪl/", meaning: "n. 细节，具体情况" },
+                        { word: "countryside", pronunciation: "/ˈkʌntrisaɪd/", meaning: "n. 农村，乡村" },
+                        { word: "lost", pronunciation: "/lɒst/", meaning: "adj. 迷路的，丧失的" },
+                        { word: "none", pronunciation: "/nʌn/", meaning: "pron. 没有一个" },
+                        { word: "worried", pronunciation: "/ˈwʌrid/", meaning: "adj. 担心的，焦虑的" },
+                        { word: "luckily", pronunciation: "/ˈlʌkɪli/", meaning: "adv. 幸运地" },
+                        { word: "arrive", pronunciation: "/əˈraɪv/", meaning: "v. 到达" },
+                        { word: "app", pronunciation: "/æp/", meaning: "n. 应用软件" },
+                        { word: "find out", pronunciation: "/faɪnd aʊt/", meaning: "查明，弄清（情况）" },
+                        { word: "enjoyable", pronunciation: "/ɪnˈdʒɔɪəbl/", meaning: "adj. 令人愉快的" },
+                        { word: "proud", pronunciation: "/praʊd/", meaning: "adj. 自豪的" },
+                        { word: "be proud of", pronunciation: "/bi praʊd əv/", meaning: "对…感到自豪" },
+                        { word: "hike", pronunciation: "/haɪk/", meaning: "n. 远足，徒步旅行" },
+                        { word: "noon", pronunciation: "/nuːn/", meaning: "n. 正午" },
+                        { word: "later", pronunciation: "/ˈleɪtə(r)/", meaning: "adv. 稍后，之后" },
+                        { word: "at first", pronunciation: "/æt fɜːst/", meaning: "adv. 起初，开始时" },
+                        { word: "little by little", pronunciation: "/ˈlɪtl baɪ ˈlɪtl/", meaning: "adv. 逐渐地，一点一点地" },
+                        { word: "picnic", pronunciation: "/ˈpɪknɪk/", meaning: "n. 野餐" },
+                        { word: "because of", pronunciation: "/bɪˈkɔːz əv/", meaning: "prep. 因为" },
+                        { word: "campsite", pronunciation: "/ˈkæmpsaɪt/", meaning: "n. 营地，露营地" },
+                        { word: "childhood", pronunciation: "/ˈtʃaɪldhʊd/", meaning: "n. 童年" },
+                        { word: "relaxed", pronunciation: "/rɪˈlækst/", meaning: "adj. 放松的，冷静的" },
+                        { word: "ever", pronunciation: "/ˈevə(r)/", meaning: "adv. 曾经，永远" },
+                        { word: "focus", pronunciation: "/ˈfəʊkəs/", meaning: "v. 集中（注意力）" },
+                        { word: "mind", pronunciation: "/maɪnd/", meaning: "n. 思维，注意力" },
+                        { word: "roll", pronunciation: "/rəʊl/", meaning: "v. 滚动，转动" },
+                        { word: "roll out", pronunciation: "/rəʊl aʊt/", meaning: "v. 展开，推出" },
+                        { word: "sleeping bag", pronunciation: "/ˈsliːpɪŋ bæɡ/", meaning: "n. 睡袋" },
+                        { word: "fall", pronunciation: "/fɔːl/", meaning: "v. 跌倒，掉落" },
+                        { word: "asleep", pronunciation: "/əˈsliːp/", meaning: "adj. 睡着" },
+                        { word: "chance", pronunciation: "/tʃɑːns/", meaning: "n. 机会，可能性" },
+                        { word: "first-time", pronunciation: "/ˈfɜːrst taɪm/", meaning: "adj. 第一次的" },
+                        { word: "camper", pronunciation: "/ˈkæmpə(r)/", meaning: "n. 露营者" },
+                        { word: "medicine", pronunciation: "/ˈmedɪsən/", meaning: "n. 药物，医学" },
+                        { word: "safety", pronunciation: "/ˈseɪfti/", meaning: "n. 安全，安全性" },
+                        { word: "birdwatching", pronunciation: "/ˈbɜːdwɒtʃɪŋ/", meaning: "n. 观鸟" },
+                        { word: "binoculars", pronunciation: "/bɪˈnɒkjʊlərz/", meaning: "n. 双筒望远镜" },
+                        { word: "clearly", pronunciation: "/ˈklɪəli/", meaning: "adv. 清楚地，明显地" },
+                        { word: "had better", pronunciation: "/hæd ˈbetər/", meaning: "最好，应该" },
+                        { word: "thirsty", pronunciation: "/ˈθɜːsti/", meaning: "adj. 口渴的" },
+                        { word: "no problem", pronunciation: "/noʊ ˈprɒbləm/", meaning: "n. 没问题，不客气" }
+                    ]
+                },
+                {
+                    unit: 8,
+                    words: [
+                        { word: "fisherman", pronunciation: "/ˈfɪʃəmən/", meaning: "n. 渔民，钓鱼爱好者" },
+                        { word: "adventure", pronunciation: "/ədˈventʃə(r)/", meaning: "n. 冒险，奇遇" },
+                        { word: "partner", pronunciation: "/ˈpɑːtnə(r)/", meaning: "n. 伙伴，搭档" },
+                        { word: "magic", pronunciation: "/ˈmædʒɪk/", meaning: "n. 魔法，神奇" },
+                        { word: "paintbrush", pronunciation: "/ˈpeɪntbrʌʃ/", meaning: "n. 画笔" },
+                        { word: "magical", pronunciation: "/ˈmædʒɪkəl/", meaning: "adj. 神奇的，魔法的" },
+                        { word: "collection", pronunciation: "/kəˈlɛkʃən/", meaning: "n. 收藏，收集" },
+                        { word: "fantasy", pronunciation: "/ˈfæntəsi/", meaning: "n. 幻想，幻想故事" },
+                        { word: "classic", pronunciation: "/ˈklæsɪk/", meaning: "adj. 经典的，名著" },
+                        { word: "god", pronunciation: "/ɡɒd/", meaning: "n. 神" },
+                        { word: "character", pronunciation: "/ˈkærɪktə(r)/", meaning: "n. 人物，角色" },
+                        { word: "lend", pronunciation: "/lɛnd/", meaning: "v. 借给，借出" },
+                        { word: "pass", pronunciation: "/pɑːs/", meaning: "v. 通过，经过，传递" },
+                        { word: "hit", pronunciation: "/hɪt/", meaning: "v. 击打，撞击" },
+                        { word: "herself", pronunciation: "/hɜːˈself/", meaning: "pron. 她自己" },
+                        { word: "low", pronunciation: "/ləʊ/", meaning: "adj. 低的，矮的" },
+                        { word: "locked", pronunciation: "/lɒkt/", meaning: "adj. 锁住的，关闭的" },
+                        { word: "fit", pronunciation: "/fɪt/", meaning: "adj. 合适的，适合的" },
+                        { word: "notice", pronunciation: "/ˈnəʊtɪs/", meaning: "n. 注意，通知" },
+                        { word: "lock", pronunciation: "/lɒk/", meaning: "n. 锁，锁上" },
+                        { word: "happen", pronunciation: "/ˈhæpən/", meaning: "v. 发生，发生在" },
+                        { word: "series", pronunciation: "/ˈsɪərɪz/", meaning: "n. 系列，一系列" },
+                        { word: "factory", pronunciation: "/ˈfæktri/", meaning: "n. 工厂，制造厂" },
+                        { word: "company", pronunciation: "/ˈkʌmpəni/", meaning: "n. 公司，企业" },
+                        { word: "just", pronunciation: "/dʒʌst/", meaning: "adv. 刚才；方才" },
+                        { word: "whether", pronunciation: "/ˈwɛðə(r)/", meaning: "conj. 是否，或者" },
+                        { word: "be born", pronunciation: "/bi bɔːn/", meaning: "v. 出生" },
+                        { word: "lose", pronunciation: "/luːz/", meaning: "v. 失去，丢失" },
+                        { word: "publish", pronunciation: "/ˈpʌblɪʃ/", meaning: "v. 出版，发表" },
+                        { word: "die", pronunciation: "/daɪ/", meaning: "v. 死，死亡" },
+                        { word: "guide", pronunciation: "/ɡaɪd/", meaning: "n. 指导，导游；v. 指导，导游" },
+                        { word: "set", pronunciation: "/set/", meaning: "v. 设定，安排" },
+                        { word: "real", pronunciation: "/rɪəl/", meaning: "adj. 真实的，实际存在的" },
+                        { word: "imagine", pronunciation: "/ɪˈmædʒɪn/", meaning: "v. 想象，设想" },
+                        { word: "while", pronunciation: "/waɪl/", meaning: "conj. 当，期间" },
+                        { word: "plot", pronunciation: "/plɒt/", meaning: "n. 情节，故事情节" },
+                        { word: "fairy", pronunciation: "/ˈfeəri/", meaning: "n. 小精灵，仙女" },
+                        { word: "peach", pronunciation: "/piːtʃ/", meaning: "n. 桃子" },
+                        { word: "fill", pronunciation: "/fɪl/", meaning: "v. 填充，填满" },
+                        { word: "give up", pronunciation: "/ɡɪv ʌp/", meaning: "v. 放弃" },
+                        { word: "in the face of", pronunciation: "/ɪn ðə feɪs əv/", meaning: "prep. 面对，尽管" },
+                        { word: "task", pronunciation: "/tɑːsk/", meaning: "n. 任务，工作" },
+                        { word: "goal", pronunciation: "/ɡəʊl/", meaning: "n. 目标" },
+                        { word: "solve", pronunciation: "/sɒlv/", meaning: "v. 解决" },
+                        { word: "note", pronunciation: "/nəʊt/", meaning: "n. 便条，笔记" },
+                        { word: "suddenly", pronunciation: "/ˈsʌdənli/", meaning: "adv. 突然地" },
+                        { word: "decide", pronunciation: "/dɪˈsaɪd/", meaning: "v. 决定" },
+                        { word: "enter", pronunciation: "/ˈentə(r)/", meaning: "v. 进入" },
+                        { word: "towards", pronunciation: "/təˈwɔːdz/", meaning: "prep. 向，朝" },
+                        { word: "too", pronunciation: "/tuː/", meaning: "adv. 也，太" },
+                        { word: "reach", pronunciation: "/riːtʃ/", meaning: "v. 到达，伸手够到" },
+                        { word: "fail", pronunciation: "/feɪl/", meaning: "v. 失败，不及格" }
+                    ]
+                }
+            ];
+
+            const container = document.getElementById("word-container");
+            const toggleButton = document.getElementById("toggle-button");
+            const searchInput = document.getElementById("search-input");
+
+            // 当前显示模式，默认是英文模式
+            let currentMode = "english";
+
+            // 创建翻转卡片
+            function createFlipCard(wordObj, unitClass) {
+                // 创建word-box
+                const wordBox = document.createElement("div");
+                wordBox.classList.add("word-box", unitClass);
+
+                // 创建flip-card
+                const flipCard = document.createElement("div");
+                flipCard.classList.add("flip-card");
+                flipCard.setAttribute("tabindex", "0"); // 使卡片可聚焦
+
+                // 创建flip-card-inner
+                const flipCardInner = document.createElement("div");
+                flipCardInner.classList.add("flip-card-inner");
+
+                // 创建前面
+                const flipCardFront = document.createElement("div");
+                flipCardFront.classList.add("flip-card-front");
+
+                const wordElement = document.createElement("h3");
+                wordElement.classList.add("word");
+                wordElement.textContent = wordObj.word;
+
+                const pronunciationElement = document.createElement("p");
+                pronunciationElement.classList.add("pronunciation");
+                pronunciationElement.textContent = wordObj.pronunciation;
+
+                flipCardFront.appendChild(wordElement);
+                flipCardFront.appendChild(pronunciationElement);
+
+                // 创建背面
+                const flipCardBack = document.createElement("div");
+                flipCardBack.classList.add("flip-card-back");
+
+                const meaningElement = document.createElement("p");
+                meaningElement.classList.add("meaning");
+                meaningElement.textContent = wordObj.meaning;
+
+                flipCardBack.appendChild(meaningElement);
+
+                // 组装flip-card-inner
+                flipCardInner.appendChild(flipCardFront);
+                flipCardInner.appendChild(flipCardBack);
+
+                // 组装flip-card
+                flipCard.appendChild(flipCardInner);
+
+                // 初始化定时器ID
+                flipCard.timerId = null;
+
+                // 事件监听：点击翻转并自动翻转回去
+                flipCard.addEventListener("click", () => {
+                    // 如果已经翻转，先清除之前的定时器
+                    if (flipCard.timerId) {
+                        clearTimeout(flipCard.timerId);
+                        flipCard.timerId = null;
+                    }
+
+                    // 翻转卡片
+                    flipCard.classList.toggle("flipped");
+
+                    // 如果卡片现在是翻转状态，设置定时器2秒后翻回去
+                    if (flipCard.classList.contains("flipped")) {
+                        flipCard.timerId = setTimeout(() => {
+                            flipCard.classList.remove("flipped");
+                            flipCard.timerId = null;
+                        }, 2000); // 2000毫秒 = 2秒
+                    }
+                });
+
+                // 键盘事件监听：按Enter或Space键翻转并自动翻转回去
+                flipCard.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+
+                        // 如果已经翻转，先清除之前的定时器
+                        if (flipCard.timerId) {
+                            clearTimeout(flipCard.timerId);
+                            flipCard.timerId = null;
+                        }
+
+                        // 翻转卡片
+                        flipCard.classList.toggle("flipped");
+
+                        // 如果卡片现在是翻转状态，设置定时器2秒后翻回去
+                        if (flipCard.classList.contains("flipped")) {
+                            flipCard.timerId = setTimeout(() => {
+                                flipCard.classList.remove("flipped");
+                                flipCard.timerId = null;
+                            }, 2000); // 2000毫秒 = 2秒
+                        }
+                    }
+                });
+
+                // 组装word-box
+                wordBox.appendChild(flipCard);
+
+                // 存储单词数据作为属性，以便后续切换模式时使用
+                flipCard.dataset.word = wordObj.word;
+                flipCard.dataset.pronunciation = wordObj.pronunciation;
+                flipCard.dataset.meaning = wordObj.meaning;
+
+                return wordBox;
+            }
+
+            // 生成所有单词盒子
+            units.forEach(unit => {
+                // 创建单元节
+                const unitSection = document.createElement("div");
+                unitSection.classList.add("unit-section", `unit-${unit.unit}`);
+
+                // 添加单元标题
+                const unitTitle = document.createElement("h2");
+                unitTitle.textContent = `Unit ${unit.unit}`;
+                unitSection.appendChild(unitTitle);
+
+                // 生成单词盒子
+                unit.words.forEach(word => {
+                    const wordBox = createFlipCard(word, `unit-${unit.unit}`);
+                    unitSection.appendChild(wordBox);
+                });
+
+                // 添加到容器
+                container.appendChild(unitSection);
+            });
+
+            // 搜索功能
+            searchInput.addEventListener("input", () => {
+                const query = searchInput.value.toLowerCase();
+                const wordBoxes = container.querySelectorAll(".word-box");
+
+                wordBoxes.forEach(box => {
+                    const flipCard = box.querySelector(".flip-card");
+                    let word, meaning;
+
+                    if (currentMode === "english") {
+                        word = flipCard.dataset.word.toLowerCase();
+                    } else {
+                        meaning = flipCard.dataset.meaning.toLowerCase();
+                    }
+
+                    if (currentMode === "english") {
+                        if (word.includes(query)) {
+                            box.style.display = "block";
+                        } else {
+                            box.style.display = "none";
+                        }
+                    } else {
+                        if (meaning.includes(query)) {
+                            box.style.display = "block";
+                        } else {
+                            box.style.display = "none";
+                        }
+                    }
+                });
+            });
+
+            // 切换按钮功能
+            toggleButton.addEventListener("click", () => {
+                if (currentMode === "english") {
+                    currentMode = "chinese";
+                    toggleButton.textContent = "切换到英文模式";
+                } else {
+                    currentMode = "english";
+                    toggleButton.textContent = "切换到中文模式";
+                }
+
+                // 更新所有卡片的内容
+                const flipCards = container.querySelectorAll(".flip-card");
+                flipCards.forEach(flipCard => {
+                    const word = flipCard.dataset.word;
+                    const pronunciation = flipCard.dataset.pronunciation;
+                    const meaning = flipCard.dataset.meaning;
+
+                    const flipCardFront = flipCard.querySelector(".flip-card-front");
+                    const flipCardBack = flipCard.querySelector(".flip-card-back");
+
+                    // 清空当前内容
+                    flipCardFront.innerHTML = "";
+                    flipCardBack.innerHTML = "";
+
+                    if (currentMode === "english") {
+                        // 英文模式
+                        const wordElement = document.createElement("h3");
+                        wordElement.classList.add("word");
+                        wordElement.textContent = word;
+
+                        const pronunciationElement = document.createElement("p");
+                        pronunciationElement.classList.add("pronunciation");
+                        pronunciationElement.textContent = pronunciation;
+
+                        flipCardFront.appendChild(wordElement);
+                        flipCardFront.appendChild(pronunciationElement);
+
+                        const meaningElement = document.createElement("p");
+                        meaningElement.classList.add("meaning");
+                        meaningElement.textContent = meaning;
+
+                        flipCardBack.appendChild(meaningElement);
+                    } else {
+                        // 中文模式
+                        const meaningElement = document.createElement("p");
+                        meaningElement.classList.add("meaning");
+                        meaningElement.textContent = meaning;
+
+                        flipCardFront.appendChild(meaningElement);
+
+                        const wordElement = document.createElement("h3");
+                        wordElement.classList.add("word");
+                        wordElement.textContent = word;
+
+                        const pronunciationElement = document.createElement("p");
+                        pronunciationElement.classList.add("pronunciation");
+                        pronunciationElement.textContent = pronunciation;
+
+                        flipCardBack.appendChild(wordElement);
+                        flipCardBack.appendChild(pronunciationElement);
+                    }
+
+                    // 如果卡片处于翻转状态，保持翻转
+                    // 可选：自动翻回
+                    if (flipCard.classList.contains("flipped")) {
+                        flipCard.classList.remove("flipped");
+                        // 重新添加翻转
+                        flipCard.classList.add("flipped");
+
+                        // 清除旧的定时器
+                        if (flipCard.timerId) {
+                            clearTimeout(flipCard.timerId);
+                            flipCard.timerId = null;
+                        }
+
+                        // 设置新的定时器
+                        flipCard.timerId = setTimeout(() => {
+                            flipCard.classList.remove("flipped");
+                            flipCard.timerId = null;
+                        }, 2000);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
