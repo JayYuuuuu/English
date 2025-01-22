@@ -924,12 +924,25 @@
                     alert("当前浏览器不支持朗读功能。");
                     return;
                 }
+
                 const utterance = new SpeechSynthesisUtterance(word);
                 utterance.lang = accent;
-                const matchedVoice = availableVoices.find(voice => voice.lang === accent);
+
+                // 可以遍历 availableVoices，看看有没有名字更好听的语音:
+                const matchedVoice = availableVoices.find(voice =>
+                    // 这里有些系统同一种语言下有多个 Voice，可以根据 name 或其它属性再筛一下
+                    voice.lang === accent
+                    // && voice.name.includes("Google") // 例如更喜欢 Google 系的就加这个判断
+                );
                 if (matchedVoice) {
                     utterance.voice = matchedVoice;
                 }
+
+                // --- 关键：调一下音高、语速 ---
+                utterance.pitch = 1.2;   // 默认 1，你可以改 0.8 ~ 1.5之间听听效果
+                utterance.rate = 0.9;    // 默认 1，可稍微放慢一点
+                utterance.volume = 1;    // 默认 1
+
                 speechSynthesis.speak(utterance);
             }
 
