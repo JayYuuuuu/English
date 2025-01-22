@@ -915,40 +915,80 @@
 
             let currentMode = "english"; // 默认英文模式
 
-            // ========== 语音 ==========
-            let availableVoices = [];
-            function loadVoices() {
-                availableVoices = speechSynthesis.getVoices();
-            }
-            speechSynthesis.onvoiceschanged = loadVoices;
-            loadVoices(); // 先调一次
+            // ========== 语音（改成“代码a”的写法） ==========
 
-            function speakWord(word, accent) {
-                if (!window.speechSynthesis) {
-                    alert("当前浏览器不支持朗读功能。");
+            let voices = [];                  // 存所有可用 voice
+            let voiceMap = new Map();         // 语言 => voice 的映射
+            let currentAccent = "en-US";      // 当前口音(可改成 en-GB)，随时切换
+
+            // 加载声音列表（异步），并把常用的 en-US / en-GB voice 存进 voiceMap
+            function loadVoicesAsync() {
+                return new Promise((resolve) => {
+                    let localVoices = speechSynthesis.getVoices();
+                    if (localVoices.length) {
+                        // 已经拿到 voices
+                        voices = localVoices;
+                        voices.forEach((v) => {
+                            if (v.lang === "en-US") {
+                                voiceMap.set("en-US", v);
+                            }
+                            if (v.lang === "en-GB") {
+                                voiceMap.set("en-GB", v);
+                            }
+                        });
+                        resolve(voices);
+                    } else {
+                        // 如果暂时为空，等事件回调
+                        speechSynthesis.onvoiceschanged = () => {
+                            localVoices = speechSynthesis.getVoices();
+                            voices = localVoices;
+                            voices.forEach((v) => {
+                                if (v.lang === "en-US") {
+                                    voiceMap.set("en-US", v);
+                                }
+                                if (v.lang === "en-GB") {
+                                    voiceMap.set("en-GB", v);
+                                }
+                            });
+                            resolve(localVoices);
+                        };
+                    }
+                });
+            }
+
+            /*
+             * 朗读文本（取自“代码a”）
+             * @param {string} englishWord - 要朗读的英语单词
+             */
+            async function speakText(englishWord) {
+                if (!("speechSynthesis" in window)) {
+                    alert("抱歉，当前浏览器不支持朗读功能。");
                     return;
                 }
 
-                const utterance = new SpeechSynthesisUtterance(word);
-                utterance.lang = accent;
-
-                // 可以遍历 availableVoices，看看有没有名字更好听的语音:
-                const matchedVoice = availableVoices.find(voice =>
-                    // 这里有些系统同一种语言下有多个 Voice，可以根据 name 或其它属性再筛一下
-                    voice.lang === accent
-                    // && voice.name.includes("Google") // 例如更喜欢 Google 系的就加这个判断
-                );
-                if (matchedVoice) {
-                    utterance.voice = matchedVoice;
+                // 如果还没加载过语音，就先加载
+                if (voices.length === 0) {
+                    await loadVoicesAsync();
                 }
 
-                // --- 关键：调一下音高、语速 ---
-                utterance.pitch = 1.2;   // 默认 1，你可以改 0.8 ~ 1.5之间听听效果
-                utterance.rate = 0.9;    // 默认 1，可稍微放慢一点
-                utterance.volume = 1;    // 默认 1
+                // 取消当前正在朗读的
+                window.speechSynthesis.cancel();
 
-                speechSynthesis.speak(utterance);
+                const utterance = new SpeechSynthesisUtterance(englishWord);
+                utterance.lang = currentAccent; // 根据全局 currentAccent 设置语言
+
+                // 找到对应语言的 voice
+                const selectedVoice = voiceMap.get(currentAccent);
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                }
+
+                // 开始朗读
+                window.speechSynthesis.speak(utterance);
             }
+
+            // 立即触发一次异步加载语音
+            loadVoicesAsync();
 
             // ========== 创建卡片函数 ==========
             function createFlipCard(wordObj, unitClass, unitNumber) {
@@ -988,20 +1028,25 @@
                 // 两个发音按钮
                 const buttonRowFront = document.createElement("div");
                 buttonRowFront.classList.add("button-row");
+
                 const speakButtonGB = document.createElement("button");
                 speakButtonGB.textContent = "英式";
+                speakButtonGB.classList.add("speak-btn");
                 speakButtonGB.onclick = (e) => {
                     e.stopPropagation();
-                    speakWord(wordObj.word, "en-GB");
+                    currentAccent = "en-GB";      // 切成英式
+                    speakText(wordObj.word);      // 用新函数朗读
                 };
-                speakButtonGB.classList.add("speak-btn");
+
                 const speakButtonUS = document.createElement("button");
                 speakButtonUS.textContent = "美式";
+                speakButtonUS.classList.add("speak-btn");
                 speakButtonUS.onclick = (e) => {
                     e.stopPropagation();
-                    speakWord(wordObj.word, "en-US");
+                    currentAccent = "en-US";      // 切成美式
+                    speakText(wordObj.word);
                 };
-                speakButtonUS.classList.add("speak-btn");
+
                 buttonRowFront.appendChild(speakButtonGB);
                 buttonRowFront.appendChild(speakButtonUS);
 
@@ -1036,7 +1081,8 @@
                         }, 2000);
                     }
                 });
-                // 键盘翻转
+
+                // 键盘翻转（回车或空格）
                 flipCard.addEventListener("keydown", (e) => {
                     if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
