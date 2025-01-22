@@ -1,20 +1,28 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8" />
     <title>单词打印页（Unit1 ~ Unit8）</title>
+    <!-- 新增：让移动端能自适应 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         /* A4纸，四边预留20mm边距 */
         @page {
             size: A4;
             margin: 20mm;
         }
+
         body {
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
-            background-color: #f9f9f9; /* 设置整体背景色 */
+            background-color: #f9f9f9;
+            /* 设置整体背景色 */
+            position: relative;
+            /* 为了后面浮动条的定位 */
         }
+
         /* 容器：使用Flex布局，垂直排列单元节 */
         .container {
             display: flex;
@@ -22,6 +30,7 @@
             align-items: center;
             margin: 10px;
         }
+
         /* 单元节 */
         .unit-section {
             width: 100%;
@@ -29,153 +38,199 @@
             border-radius: 10px;
             margin-bottom: 30px;
             box-sizing: border-box;
-            display: flex; /* 设为Flex布局 */
-            flex-direction: row; /* 水平排列 */
-            flex-wrap: wrap; /* 允许换行 */
-            justify-content: flex-start; /* 左对齐 */
-            background-color: #ffffff; /* 设置单元节的背景色为白色 */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 添加轻微阴影 */
+            display: flex;
+            /* 设为Flex布局 */
+            flex-direction: row;
+            /* 水平排列 */
+            flex-wrap: wrap;
+            /* 允许换行 */
+            justify-content: flex-start;
+            /* 左对齐 */
+            background-color: #ffffff;
+            /* 设置单元节的背景色为白色 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            /* 添加轻微阴影 */
         }
-        /* 单词盒子样式：一行放8个 */
+
+        /* 单词盒子：每行8个（大屏），并带有perspective以实现3D翻转 */
         .word-box {
-            flex: 0 0 calc(12.5% - 10px); /* 每个盒子占12.5%，减去边距 */
+            flex: 0 0 calc(12.5% - 10px);
+            /* 每个盒子占12.5%，减去边距；可自行调整 */
             box-sizing: border-box;
             margin: 5px;
-            perspective: 1000px; /* 为3D效果提供透视 */
-            transition: transform 0.1s; /* 添加过渡效果 */
+            /* 关键：设置3D透视效果 */
+            perspective: 1000px;
             border-radius: 5px;
-            /* 移除默认背景颜色 */
-            background-color: transparent;
+            transition: transform 0.1s;
+            /* 鼠标悬停时放大 */
         }
-       /* 鼠标悬停时，改变前面背景颜色和文字颜色，卡片略微放大 */
+
+        /* 鼠标悬停时，卡片略微放大 + 改变颜色 */
         .word-box:hover .flip-card-front,
         .word-box:hover .flip-card-back {
-            background-color: #2c2c2c; /* 背景颜色 */
-            color: #ffffff; /* 文字颜色 */
+            background-color: #2c2c2c;
+            color: #ffffff;
         }
 
-        /* 鼠标悬停时，卡片和文字一起放大 */
         .word-box:hover {
-            transform: scale(1.05); /* 略微放大卡片 */
-            transition: transform 0.1s ease; /* 平滑过渡效果 */
+            transform: scale(1.05);
+            transition: transform 0.1s ease;
         }
 
-        /* 文字初始颜色 */
-        .flip-card-front * {
-            transition: color 0.1s ease, background-color 0.1s ease; /* 文字颜色和背景颜色的过渡 */
-        }
-
-        /* 卡片初始颜色 */
-        .flip-card-front {
-            background-color: #ffffff; /* 卡片正面的背景色 */
-        }
-
-        /* 卡片背面初始颜色 */
-        .flip-card-back {
-            background-color: #ffffff; /* 卡片背面的背景色 */
-            color: #333333; /* 背面的文字颜色 */
-        }
-
-        /* 翻转卡片容器 */
+        /* 翻转卡片最外层容器 */
         .flip-card {
-            background-color: transparent;
+            position: relative;
             width: 100%;
             height: 150px;
-            position: relative;
+            /* 卡片高度，可自行调整 */
             cursor: pointer;
             outline: none;
         }
-        /* 翻转卡片内部 */
+
+        /* 内部实际翻转的部分 */
         .flip-card-inner {
-            position: relative;
+            /* 让它填满 flip-card */
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+
             text-align: center;
-            transition: transform 0.6s;
             transform-style: preserve-3d;
+            transform-origin: center center;
+            /* 围绕中心翻转 */
+            transition: transform 0.6s;
         }
-        /* 翻转效果 */
+
+        /* 当父级元素含有.flipped时，翻转180度 */
         .flip-card.flipped .flip-card-inner {
             transform: rotateY(180deg);
         }
-        /* 卡片前面和背面 */
-        .flip-card-front, .flip-card-back {
+
+        /* 前后面都绝对定位并撑满 */
+        .flip-card-front,
+        .flip-card-back {
             position: absolute;
+            top: 0;
+            left: 0;
+
             width: 100%;
             height: 100%;
-            backface-visibility: hidden;
+
             border: 1px solid #ececec;
             border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
+            backface-visibility: hidden;
             box-sizing: border-box;
-            /* 前面默认无背景色，文字为黑色 */
-            background-color: transparent;
+            padding: 10px;
+
+            /* 文字颜色和背景 */
+            background-color: #ffffff;
             color: #000000;
             transition: background-color 0.1s, color 0.1s;
         }
-        .flip-card-front {
-            /* 背景色和文字颜色通过:hover控制 */
-        }
+
+        /* 背面多加个 rotateY(180deg) */
         .flip-card-back {
-            background-color: #000000; /* 背面背景色为白色 */
-            color: #ffffff; /* 背面文字为黑色 */
+            background-color: #000;
+            color: #fff;
             transform: rotateY(180deg);
         }
+
+        /* 单词部分 */
         .word {
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             transition: color 0.1s;
         }
+
         .pronunciation {
             font-style: italic;
-            color: inherit; /* 让读音颜色继承父元素 */
-            margin-bottom: 5px;
+            color: inherit;
+            /* 让读音颜色继承父元素 */
+            margin-bottom: 6px;
         }
+
         .meaning {
-            color: inherit; /* 让中文释义颜色继承父元素 */
+            color: inherit;
             font-size: 16px;
-            font-weight: bold; /* 加粗中文释义 */
+            font-weight: bold;
+            margin: 0;
+            /* 去掉默认段落的多余margin */
         }
+
+        /* 新增：发音按钮容器，固定在卡片底部并排 */
+        .button-row {
+            position: absolute;
+            bottom: 10px;
+            /* 离底部10px */
+            left: 50%;
+            /* 居中 */
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            /* 按钮间隔 */
+        }
+
+        .button-row button {
+            font-size: 14px;
+            padding: 5px 8px;
+            cursor: pointer;
+        }
+
         /* 打印时样式 */
         @media print {
             body {
                 font-size: 12pt;
-                background-color: #ffffff; /* 打印时背景色为白色 */
+                background-color: #ffffff;
             }
+
             .container {
                 justify-content: flex-start;
             }
+
             .word-box {
                 page-break-inside: avoid;
                 margin: 2mm;
             }
+
+            /* 默认展示前面 */
             .flip-card-inner {
-                transform: rotateY(0deg) !important; /* 默认展示前面 */
+                transform: rotateY(0deg) !important;
             }
+
             .flip-card-back {
-                display: none; /* 隐藏背面内容 */
+                display: none;
+                /* 隐藏背面内容 */
             }
+
             /* 隐藏搜索框和切换按钮 */
-            #search-container, #toggle-container {
+            #search-container,
+            #toggle-container {
+                display: none;
+            }
+
+            /* 隐藏浮动导航条 */
+            #float-menu {
                 display: none;
             }
         }
-        /* 添加内边距和圆角使界面更美观 */
+
+        /* 单元标题 */
         .unit-section h2 {
             text-align: center;
             margin-bottom: 20px;
             width: 100%;
         }
+
         /* 搜索框和切换按钮样式 */
-        #search-container, #toggle-container {
+        #search-container,
+        #toggle-container {
             width: 100%;
             text-align: center;
-            margin: 20px 0;
+            margin: 10px 0;
         }
+
         #search-input {
             width: 40%;
             padding: 10px;
@@ -184,75 +239,198 @@
             border-radius: 5px;
             transition: border-color 0.1s;
         }
+
         #search-input:focus {
-            border-color: #00796b; /* 聚焦时改变边框颜色 */
+            border-color: #00796b;
             outline: none;
         }
+
         #toggle-button {
             margin-left: 20px;
             padding: 10px 20px;
             font-size: 16px;
             border: none;
             border-radius: 5px;
-            background-color: #00796b;
+            background-color: #1976D2;
             color: #ffffff;
             cursor: pointer;
             transition: background-color 0.1s;
         }
+
         #toggle-button:hover {
-            background-color: #005f56;
+            background-color: #115ba6;
         }
-        
-        /* 响应式设计 */
+
+        .speak-btn {
+            /* 基础外观 */
+            background-color: #1976D2;
+            /* 蓝色背景 */
+            color: #FFFFFF;
+            /* 白色文字 */
+            border: none;
+            /* 去掉默认边框 */
+            border-radius: 6px;
+            /* 圆角 */
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+
+            /* 动画过渡 */
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .speak-btn:hover {
+            /* 悬停时更深一点 */
+            background-color: #0D47A1;
+            transform: translateY(-1px);
+            /* 轻微上移 */
+        }
+
+        .speak-btn:active {
+            /* 点击时再微缩一点 */
+            transform: scale(0.98);
+        }
+
+        /* 响应式（手机端时2个一行） */
         @media (max-width: 1200px) {
             .word-box {
-                flex: 0 0 calc(16.66% - 10px); /* 6 per row */
+                flex: 0 0 calc(16.66% - 10px);
+                /* 6 per row */
             }
+
             #search-input {
                 width: 50%;
             }
         }
+
         @media (max-width: 900px) {
             .word-box {
-                flex: 0 0 calc(25% - 10px); /* 4 per row */
+                flex: 0 0 calc(25% - 10px);
+                /* 4 per row */
             }
+
             #search-input {
                 width: 70%;
             }
+
             #toggle-button {
                 margin-left: 10px;
                 margin-top: 10px;
             }
         }
+
         @media (max-width: 600px) {
             .word-box {
-                flex: 0 0 calc(50% - 10px); /* 2 per row */
+                flex: 0 0 calc(50% - 10px);
+                /* 2 per row */
             }
+
             #search-input {
                 width: 90%;
             }
+
             #toggle-button {
                 margin-top: 10px;
             }
         }
+
+        /* 浮动导航条 */
+        /* == 浮动导航条整体 == */
+        #float-menu {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+
+            /* 1) 底色改成透明 */
+            background-color: transparent;
+
+            /* 2) 整体缩放70% */
+            transform: scale(0.7);
+            transform-origin: bottom right;
+
+            /* 3) 自带圆角 */
+            border-radius: 10px;
+
+            /* 4) 这里可视情况保留padding或减小 */
+            padding: 10px;
+
+            z-index: 999;
+        }
+
+        #float-menu ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #float-menu li {
+            margin: 8px 0;
+            text-align: center;
+        }
+
+        #float-menu a,
+        #float-menu button {
+            display: inline-block;
+
+            /* 原先是 padding: 6px 10px，可以稍微调小 */
+            padding: 5px 8px;
+
+            text-decoration: none;
+            color: #fff;
+
+            /* 让文字部分保留底色，同时做圆角边框 */
+            background-color: #1976D2;
+            border: 1px solid #fff;
+            border-radius: 10px;
+
+            cursor: pointer;
+        }
+
+        /* 悬停时 */
+        #float-menu a:hover,
+        #float-menu button:hover {
+            /* 你也可以换成别的颜色 */
+            background-color: #0D47A1;
+        }
     </style>
 </head>
-<body>
-    <!-- 搜索功能和切换按钮 -->
+
+<body id="top"><!-- 给返回顶部用的锚点 -->
+    <!-- 搜索功能 -->
     <div id="search-container">
         <input type="text" id="search-input" placeholder="搜索单词..." />
     </div>
+    <!-- 切换中英文模式 -->
     <div id="toggle-container">
         <button id="toggle-button">切换到中文模式</button>
     </div>
 
+    <!-- 容器：所有单元的单词卡片 -->
     <div class="container" id="word-container">
         <!-- 单词盒子将通过JavaScript动态生成 -->
     </div>
 
+    <!-- 浮动导航条（右下角）-->
+    <div id="float-menu">
+        <ul>
+            <li><a href="#unit-1">u1</a></li>
+            <li><a href="#unit-2">u2</a></li>
+            <li><a href="#unit-3">u3</a></li>
+            <li><a href="#unit-4">u4</a></li>
+            <li><a href="#unit-5">u5</a></li>
+            <li><a href="#unit-6">u6</a></li>
+            <li><a href="#unit-7">u7</a></li>
+            <li><a href="#unit-8">u8</a></li>
+            <li><button onclick="scrollToTop()">top</button></li>
+        </ul>
+    </div>
+
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // 单词数据
+        document.addEventListener("DOMContentLoaded", function () {
+            // ======================
+            // 1. 数据 (示例列出全部units，比较长)
+            // ======================
             const units = [
                 {
                     unit: 1,
@@ -724,111 +902,136 @@
                 }
             ];
 
+            // ======================
+            // 2. 全局状态
+            // ======================
             const container = document.getElementById("word-container");
             const toggleButton = document.getElementById("toggle-button");
             const searchInput = document.getElementById("search-input");
 
-            // 当前显示模式，默认是英文模式
-            let currentMode = "english";
+            let currentMode = "english"; // 默认英文模式
 
-            // 创建翻转卡片
-            function createFlipCard(wordObj, unitClass) {
-                // 创建word-box
+            // ========== 语音 ==========
+            let availableVoices = [];
+            function loadVoices() {
+                availableVoices = speechSynthesis.getVoices();
+            }
+            speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices(); // 先调一次
+
+            function speakWord(word, accent) {
+                if (!window.speechSynthesis) {
+                    alert("当前浏览器不支持朗读功能。");
+                    return;
+                }
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = accent;
+                const matchedVoice = availableVoices.find(voice => voice.lang === accent);
+                if (matchedVoice) {
+                    utterance.voice = matchedVoice;
+                }
+                speechSynthesis.speak(utterance);
+            }
+
+            // ========== 创建卡片函数 ==========
+            function createFlipCard(wordObj, unitClass, unitNumber) {
                 const wordBox = document.createElement("div");
                 wordBox.classList.add("word-box", unitClass);
 
-                // 创建flip-card
                 const flipCard = document.createElement("div");
                 flipCard.classList.add("flip-card");
-                flipCard.setAttribute("tabindex", "0"); // 使卡片可聚焦
+                flipCard.setAttribute("tabindex", "0");
 
-                // 创建flip-card-inner
                 const flipCardInner = document.createElement("div");
                 flipCardInner.classList.add("flip-card-inner");
 
-                // 创建前面
+                // 前面
                 const flipCardFront = document.createElement("div");
                 flipCardFront.classList.add("flip-card-front");
 
+                // 背面
+                const flipCardBack = document.createElement("div");
+                flipCardBack.classList.add("flip-card-back");
+
+                // ------ 正面（英文模式下） ------
                 const wordElement = document.createElement("h3");
                 wordElement.classList.add("word");
                 wordElement.textContent = wordObj.word;
 
-                const pronunciationElement = document.createElement("p");
-                pronunciationElement.classList.add("pronunciation");
-                pronunciationElement.textContent = wordObj.pronunciation;
+                const pronElement = document.createElement("p");
+                pronElement.classList.add("pronunciation");
+                pronElement.textContent = wordObj.pronunciation;
+
+                // 两个发音按钮
+                const buttonRowFront = document.createElement("div");
+                buttonRowFront.classList.add("button-row");
+                const speakButtonGB = document.createElement("button");
+                speakButtonGB.textContent = "英式";
+                speakButtonGB.onclick = (e) => {
+                    e.stopPropagation();
+                    speakWord(wordObj.word, "en-GB");
+                };
+                speakButtonGB.classList.add("speak-btn");
+                const speakButtonUS = document.createElement("button");
+                speakButtonUS.textContent = "美式";
+                speakButtonUS.onclick = (e) => {
+                    e.stopPropagation();
+                    speakWord(wordObj.word, "en-US");
+                };
+                speakButtonUS.classList.add("speak-btn");
+                buttonRowFront.appendChild(speakButtonGB);
+                buttonRowFront.appendChild(speakButtonUS);
 
                 flipCardFront.appendChild(wordElement);
-                flipCardFront.appendChild(pronunciationElement);
+                flipCardFront.appendChild(pronElement);
+                flipCardFront.appendChild(buttonRowFront);
 
-                // 创建背面
-                const flipCardBack = document.createElement("div");
-                flipCardBack.classList.add("flip-card-back");
-
+                // ------ 背面（中文） ------
                 const meaningElement = document.createElement("p");
                 meaningElement.classList.add("meaning");
                 meaningElement.textContent = wordObj.meaning;
-
                 flipCardBack.appendChild(meaningElement);
 
-                // 组装flip-card-inner
+                // 组装
                 flipCardInner.appendChild(flipCardFront);
                 flipCardInner.appendChild(flipCardBack);
-
-                // 组装flip-card
                 flipCard.appendChild(flipCardInner);
+                wordBox.appendChild(flipCard);
 
-                // 初始化定时器ID
+                // 点击翻转逻辑
                 flipCard.timerId = null;
-
-                // 事件监听：点击翻转并自动翻转回去
                 flipCard.addEventListener("click", () => {
-                    // 如果已经翻转，先清除之前的定时器
                     if (flipCard.timerId) {
                         clearTimeout(flipCard.timerId);
                         flipCard.timerId = null;
                     }
-
-                    // 翻转卡片
                     flipCard.classList.toggle("flipped");
-
-                    // 如果卡片现在是翻转状态，设置定时器2秒后翻回去
                     if (flipCard.classList.contains("flipped")) {
                         flipCard.timerId = setTimeout(() => {
                             flipCard.classList.remove("flipped");
                             flipCard.timerId = null;
-                        }, 2000); // 2000毫秒 = 2秒
+                        }, 2000);
                     }
                 });
-
-                // 键盘事件监听：按Enter或Space键翻转并自动翻转回去
+                // 键盘翻转
                 flipCard.addEventListener("keydown", (e) => {
                     if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-
-                        // 如果已经翻转，先清除之前的定时器
                         if (flipCard.timerId) {
                             clearTimeout(flipCard.timerId);
                             flipCard.timerId = null;
                         }
-
-                        // 翻转卡片
                         flipCard.classList.toggle("flipped");
-
-                        // 如果卡片现在是翻转状态，设置定时器2秒后翻回去
                         if (flipCard.classList.contains("flipped")) {
                             flipCard.timerId = setTimeout(() => {
                                 flipCard.classList.remove("flipped");
                                 flipCard.timerId = null;
-                            }, 2000); // 2000毫秒 = 2秒
+                            }, 2000);
                         }
                     }
                 });
 
-                // 组装word-box
-                wordBox.appendChild(flipCard);
-
-                // 存储单词数据作为属性，以便后续切换模式时使用
+                // 存信息到DOM
                 flipCard.dataset.word = wordObj.word;
                 flipCard.dataset.pronunciation = wordObj.pronunciation;
                 flipCard.dataset.meaning = wordObj.meaning;
@@ -836,59 +1039,45 @@
                 return wordBox;
             }
 
-            // 生成所有单词盒子
+            // ========== 生成所有单词卡片 ==========
             units.forEach(unit => {
-                // 创建单元节
                 const unitSection = document.createElement("div");
+                unitSection.id = `unit-${unit.unit}`;
                 unitSection.classList.add("unit-section", `unit-${unit.unit}`);
 
-                // 添加单元标题
                 const unitTitle = document.createElement("h2");
                 unitTitle.textContent = `Unit ${unit.unit}`;
                 unitSection.appendChild(unitTitle);
 
-                // 生成单词盒子
-                unit.words.forEach(word => {
-                    const wordBox = createFlipCard(word, `unit-${unit.unit}`);
+                unit.words.forEach(wordObj => {
+                    const wordBox = createFlipCard(wordObj, `unit-${unit.unit}`, unit.unit);
                     unitSection.appendChild(wordBox);
                 });
 
-                // 添加到容器
                 container.appendChild(unitSection);
             });
 
-            // 搜索功能
+            // ========== 搜索功能 ==========
             searchInput.addEventListener("input", () => {
                 const query = searchInput.value.toLowerCase();
                 const wordBoxes = container.querySelectorAll(".word-box");
 
                 wordBoxes.forEach(box => {
                     const flipCard = box.querySelector(".flip-card");
-                    let word, meaning;
+                    let word = flipCard.dataset.word.toLowerCase();
+                    let meaning = flipCard.dataset.meaning.toLowerCase();
 
                     if (currentMode === "english") {
-                        word = flipCard.dataset.word.toLowerCase();
+                        // 搜英文
+                        box.style.display = word.includes(query) ? "block" : "none";
                     } else {
-                        meaning = flipCard.dataset.meaning.toLowerCase();
-                    }
-
-                    if (currentMode === "english") {
-                        if (word.includes(query)) {
-                            box.style.display = "block";
-                        } else {
-                            box.style.display = "none";
-                        }
-                    } else {
-                        if (meaning.includes(query)) {
-                            box.style.display = "block";
-                        } else {
-                            box.style.display = "none";
-                        }
+                        // 搜中文
+                        box.style.display = meaning.includes(query) ? "block" : "none";
                     }
                 });
             });
 
-            // 切换按钮功能
+            // ========== 中英文模式切换 ==========
             toggleButton.addEventListener("click", () => {
                 if (currentMode === "english") {
                     currentMode = "chinese";
@@ -898,72 +1087,107 @@
                     toggleButton.textContent = "切换到中文模式";
                 }
 
-                // 更新所有卡片的内容
+                // 遍历所有翻转卡片，重新赋内容
                 const flipCards = container.querySelectorAll(".flip-card");
                 flipCards.forEach(flipCard => {
-                    const word = flipCard.dataset.word;
-                    const pronunciation = flipCard.dataset.pronunciation;
-                    const meaning = flipCard.dataset.meaning;
+                    const { word, pronunciation, meaning } = flipCard.dataset;
+                    const front = flipCard.querySelector(".flip-card-front");
+                    const back = flipCard.querySelector(".flip-card-back");
 
-                    const flipCardFront = flipCard.querySelector(".flip-card-front");
-                    const flipCardBack = flipCard.querySelector(".flip-card-back");
-
-                    // 清空当前内容
-                    flipCardFront.innerHTML = "";
-                    flipCardBack.innerHTML = "";
+                    // 清空
+                    front.innerHTML = "";
+                    back.innerHTML = "";
 
                     if (currentMode === "english") {
-                        // 英文模式
-                        const wordElement = document.createElement("h3");
-                        wordElement.classList.add("word");
-                        wordElement.textContent = word;
+                        // 正面：英文
+                        const wordEl = document.createElement("h3");
+                        wordEl.classList.add("word");
+                        wordEl.textContent = word;
 
-                        const pronunciationElement = document.createElement("p");
-                        pronunciationElement.classList.add("pronunciation");
-                        pronunciationElement.textContent = pronunciation;
+                        const pronEl = document.createElement("p");
+                        pronEl.classList.add("pronunciation");
+                        pronEl.textContent = pronunciation;
 
-                        flipCardFront.appendChild(wordElement);
-                        flipCardFront.appendChild(pronunciationElement);
+                        const buttonRowFront = document.createElement("div");
+                        buttonRowFront.classList.add("button-row");
 
-                        const meaningElement = document.createElement("p");
-                        meaningElement.classList.add("meaning");
-                        meaningElement.textContent = meaning;
+                        const speakButtonGB = document.createElement("button");
+                        speakButtonGB.textContent = "英式";
+                        speakButtonGB.classList.add("speak-btn");
+                        speakButtonGB.onclick = (e) => {
+                            e.stopPropagation();
+                            speakWord(word, "en-GB");
+                        };
 
-                        flipCardBack.appendChild(meaningElement);
+                        const speakButtonUS = document.createElement("button");
+                        speakButtonUS.textContent = "美式";
+                        speakButtonUS.classList.add("speak-btn");
+                        speakButtonUS.onclick = (e) => {
+                            e.stopPropagation();
+                            speakWord(word, "en-US");
+                        };
+
+                        buttonRowFront.appendChild(speakButtonGB);
+                        buttonRowFront.appendChild(speakButtonUS);
+
+                        front.appendChild(wordEl);
+                        front.appendChild(pronEl);
+                        front.appendChild(buttonRowFront);
+
+                        // 背面：中文
+                        const meaningEl = document.createElement("p");
+                        meaningEl.classList.add("meaning");
+                        meaningEl.textContent = meaning;
+                        back.appendChild(meaningEl);
+
+                        // 中文在背面，需要居中就写在背面这里
+                        back.style.display = "flex";
+                        back.style.flexDirection = "column";
+                        back.style.justifyContent = "center";
+                        back.style.alignItems = "center";
+                        back.style.textAlign = "center";
+
+                        // 英文那面要恢复原本布局
+                        front.style.display = "block"; // 或者也用flex，但不一定要居中
+
                     } else {
-                        // 中文模式
-                        const meaningElement = document.createElement("p");
-                        meaningElement.classList.add("meaning");
-                        meaningElement.textContent = meaning;
+                        // 正面：中文
+                        const meaningEl = document.createElement("p");
+                        meaningEl.classList.add("meaning");
+                        meaningEl.textContent = meaning;
+                        front.appendChild(meaningEl);
 
-                        flipCardFront.appendChild(meaningElement);
+                        // 中文在正面，需要居中
+                        front.style.display = "flex";
+                        front.style.flexDirection = "column";
+                        front.style.justifyContent = "center";
+                        front.style.alignItems = "center";
+                        front.style.textAlign = "center";
 
-                        const wordElement = document.createElement("h3");
-                        wordElement.classList.add("word");
-                        wordElement.textContent = word;
+                        // 背面：英文
+                        const wordEl = document.createElement("h3");
+                        wordEl.classList.add("word");
+                        wordEl.textContent = word;
 
-                        const pronunciationElement = document.createElement("p");
-                        pronunciationElement.classList.add("pronunciation");
-                        pronunciationElement.textContent = pronunciation;
+                        const pronEl = document.createElement("p");
+                        pronEl.classList.add("pronunciation");
+                        pronEl.textContent = pronunciation;
 
-                        flipCardBack.appendChild(wordElement);
-                        flipCardBack.appendChild(pronunciationElement);
+                        back.appendChild(wordEl);
+                        back.appendChild(pronEl);
+
+                        // 英文那面按钮可选加上，也可不加
+                        back.style.display = "block"; // 或者你也可以加别的布局
                     }
 
-                    // 如果卡片处于翻转状态，保持翻转
-                    // 可选：自动翻回
+                    // 若此时卡片是翻转的，也处理一下
                     if (flipCard.classList.contains("flipped")) {
                         flipCard.classList.remove("flipped");
-                        // 重新添加翻转
                         flipCard.classList.add("flipped");
-
-                        // 清除旧的定时器
                         if (flipCard.timerId) {
                             clearTimeout(flipCard.timerId);
                             flipCard.timerId = null;
                         }
-
-                        // 设置新的定时器
                         flipCard.timerId = setTimeout(() => {
                             flipCard.classList.remove("flipped");
                             flipCard.timerId = null;
@@ -972,6 +1196,12 @@
                 });
             });
         });
+
+        // 返回顶部
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     </script>
 </body>
+
 </html>
