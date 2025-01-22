@@ -257,6 +257,12 @@
             transition: background-color 0.1s;
         }
 
+        #toggle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         #toggle-button:hover {
             background-color: #115ba6;
         }
@@ -965,6 +971,12 @@
                 // 背面
                 const flipCardBack = document.createElement("div");
                 flipCardBack.classList.add("flip-card-back");
+                // 新增：给背面加上flex居中
+                flipCardBack.style.display = "flex";
+                flipCardBack.style.flexDirection = "column";
+                flipCardBack.style.justifyContent = "center";
+                flipCardBack.style.alignItems = "center";
+                flipCardBack.style.textAlign = "center";
 
                 // ------ 正面（英文模式下） ------
                 const wordElement = document.createElement("h3");
