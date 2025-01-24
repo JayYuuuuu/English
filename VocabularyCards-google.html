@@ -1,35 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 
 <head>
-    <title>FirebaseUI Login & Realtime Database</title>
-    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.css" />
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云端单词卡片</title>
 
-        #firebaseui-auth-container {
-            margin-top: 20px;
-        }
-
-        #data-container {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background-color: #f9f9f9;
-        }
-    </style>
-</head>
-
-<body>
-    <h1>FirebaseUI Login & Realtime Database</h1>
-    <div id="firebaseui-auth-container"></div>
-    <div id="data-container">
-        <p>登录后，这里将显示 Firebase 实时数据库中的数据。</p>
-    </div>
-
+    <!-- Firebase SDK (模块化) -->
     <!-- Firebase 核心库 -->
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
     <!-- Firebase 身份验证库 -->
@@ -39,84 +16,458 @@
     <script src="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.js"></script>
 
     <script>
-        // Firebase 配置
+
+        // TODO: 替换为您自己的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
             authDomain: "vocabularycards-3447d.firebaseapp.com",
             databaseURL: "https://vocabularycards-3447d-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "vocabularycards-3447d",
-            storageBucket: "vocabularycards-3447d.firebasestorage.app",
+            storageBucket: "vocabularycards-3447d.appspot.com",
             messagingSenderId: "449077574534",
             appId: "1:449077574534:web:75ca12e415aa8107d34a07",
             measurementId: "G-ZML5070YJ6"
         };
 
         // 初始化 Firebase
-        firebase.initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+        const wordsRef = ref(database, 'VocabularyCards'); // 数据库路径可自定义
 
-        // 初始化 FirebaseUI
-        const ui = new firebaseui.auth.AuthUI(firebase.auth());
+        // 获取页面元素
+        const authContainer = document.getElementById('authContainer');
+        const authForm = document.getElementById('authForm');
+        const authTitle = document.getElementById('authTitle');
+        const authBtn = document.getElementById('authBtn');
+        const toggleAuth = document.getElementById('toggleAuth');
 
-        // FirebaseUI 配置
-        const uiConfig = {
-            signInSuccessUrl: '/', // 登录成功后不重定向
-            signInOptions: [
-                firebase.auth.EmailAuthProvider.PROVIDER_ID, // 电子邮件/密码登录
-                firebase.auth.GoogleAuthProvider.PROVIDER_ID // Google 登录
-            ],
-            callbacks: {
-                signInSuccessWithAuthResult: function (authResult, redirectUrl) {
-                    // 登录成功后的回调
-                    console.log("User signed in:", authResult.user);
-                    fetchDataFromDatabase(); // 登录成功后获取数据
-                    return false; // 不重定向
-                },
-                signInFailure: function (error) {
-                    // 处理登录失败
-                    console.error("Sign-in error:", error);
+        const addWordForm = document.getElementById('addWordForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const cardContainer = document.getElementById('cardContainer');
+
+        let isSubmitting = false;
+        let isLogin = true; // 标记当前是登录还是注册
+
+        // 切换登录/注册模式
+        toggleAuth.addEventListener('click', () => {
+            isLogin = !isLogin;
+            authTitle.textContent = isLogin ? '登录' : '注册';
+            authBtn.textContent = isLogin ? '登录' : '注册';
+            toggleAuth.textContent = isLogin ? '没有账号？注册' : '已有账号？登录';
+        });
+
+        // 认证表单提交处理
+        authForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (isLogin) {
+                // 登录
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    // 登录成功，由 onAuthStateChanged 处理界面更新
+                } catch (error) {
+                    alert(`登录失败: ${error.message}`);
                 }
-            }
-        };
-
-        // 渲染登录界面
-        ui.start('#firebaseui-auth-container', uiConfig);
-
-        // 监听身份验证状态
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                // 用户已登录
-                console.log("User is logged in:", user);
-                fetchDataFromDatabase(); // 获取数据
             } else {
-                // 用户未登录
-                console.log("User is logged out");
-                document.getElementById('data-container').innerHTML = "<p>请登录以访问数据。</p>";
+                // 注册
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    // 注册成功，由 onAuthStateChanged 处理界面更新
+                } catch (error) {
+                    alert(`注册失败: ${error.message}`);
+                }
             }
         });
 
-        // 从 Firebase 实时数据库获取数据
-        function fetchDataFromDatabase() {
-            const userId = firebase.auth().currentUser.uid; // 获取当前用户的 UID
-            const database = firebase.database();
-            const userRef = database.ref('users/' + userId); // 假设数据存储在 "users/{userId}" 路径下
+        // 退出登录处理
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                // 退出登录成功，由 onAuthStateChanged 处理界面更新
+            } catch (error) {
+                alert(`退出登录失败: ${error.message}`);
+            }
+        });
 
-            userRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    // 显示数据
-                    document.getElementById('data-container').innerHTML = `
-                        <h3>用户数据：</h3>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
-                    `;
-                } else {
-                    document.getElementById('data-container').innerHTML = "<p>没有找到用户数据。</p>";
-                }
-            }, (error) => {
-                console.error("Error fetching data:", error);
-                document.getElementById('data-container').innerHTML = "<p>获取数据时出错。</p>";
+        // 监听认证状态变化
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                // 用户已登录
+                authContainer.style.display = 'none';
+                addWordForm.style.display = 'block';
+                cardContainer.style.display = 'block';
+                loadWords(); // 加载单词卡片
+            } else {
+                // 用户未登录
+                authContainer.style.display = 'block';
+                addWordForm.style.display = 'none';
+                cardContainer.style.display = 'none';
+                cardContainer.innerHTML = '';
+            }
+        });
+
+        // 创建单词卡片
+        function createCard(wordData) {
+            const card = document.createElement('div');
+            card.className = 'word-card';
+            card.innerHTML = `
+                <button class="delete-btn" onclick="deleteWord('${wordData.key}', '${wordData.uid}')">×</button>
+                <div class="word">${wordData.english}</div>
+                <div class="phonetic">${wordData.phonetic || '暂无音标'}</div>
+                <div class="translation">${wordData.chinese}</div>
+                <div class="pronunciation-btns">
+                    <button onclick="playPronunciation('${wordData.english}', 'UK')">英音发音</button>
+                    <button onclick="playPronunciation('${wordData.english}', 'US')">美音发音</button>
+                </div>
+            `;
+            return card;
+        }
+
+        // 删除单词
+        async function deleteWord(cardId, uid) {
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                alert('请先登录');
+                return;
+            }
+
+            if (uid !== currentUser.uid) {
+                alert('您没有权限删除这个单词');
+                return;
+            }
+
+            if (!confirm(`确定要删除这个单词吗？`)) return;
+
+            try {
+                const wordRef = ref(database, `VocabularyCards/${cardId}`);
+                await remove(wordRef);
+            } catch (error) {
+                alert('删除失败，请检查网络连接');
+            }
+        }
+
+        // 发音功能
+        function playPronunciation(word, type) {
+            const audio = new Audio(
+                `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`
+            );
+            audio.play().catch(() => alert('播放失败，请点击允许音频权限'));
+        }
+
+        // 实时数据同步
+        function loadWords() {
+            const wordsQuery = query(wordsRef, orderByChild('timestamp'));
+            onValue(wordsQuery, snapshot => {
+                const wordsData = snapshot.val() || {};
+                const container = document.getElementById('cardContainer');
+                container.innerHTML = '';
+                Object.keys(wordsData).forEach(key => {
+                    const word = wordsData[key];
+                    container.appendChild(createCard({ ...word, key }));
+                });
             });
         }
+
+        // 自动获取翻译和音标
+        let fetchTimeout;
+        document.getElementById('english').addEventListener('input', async function () {
+            clearTimeout(fetchTimeout);
+            const english = this.value.trim();
+            if (!english) {
+                document.getElementById('chinese').value = '';
+                return;
+            }
+
+            fetchTimeout = setTimeout(async () => {
+                document.getElementById('loading').style.display = 'block';
+                try {
+                    // 并行获取翻译和音标
+                    const [translation, phonetic] = await Promise.all([
+                        fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(english)}&langpair=en|zh-CN`)
+                            .then(r => r.json())
+                            .then(d => d.responseData.translatedText || '翻译失败'),
+
+                        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(english)}`)
+                            .then(r => r.ok ? r.json() : Promise.reject())
+                            .then(d => d[0]?.phonetics[0]?.text?.replace(/[\/]/g, '') || '无音标')
+                            .catch(() => '音标获取失败')
+                    ]);
+
+                    document.getElementById('chinese').value = `${translation} | ${phonetic}`;
+                } catch {
+                    document.getElementById('chinese').value = '数据获取失败';
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }, 500);
+        });
+
+        // 表单提交处理
+        addWordForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            if (isSubmitting) return;
+
+            const english = document.getElementById('english').value.trim();
+            const [chinese, phonetic] = document.getElementById('chinese').value.split(' | ');
+
+            if (!english || !chinese) {
+                alert('请填写完整信息');
+                return;
+            }
+
+            isSubmitting = true;
+            submitBtn.disabled = true;
+
+            try {
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    alert('请先登录');
+                    return;
+                }
+
+                // 检查是否存在重复单词（忽略大小写）
+                const duplicateQuery = query(wordsRef, orderByChild('english'), equalTo(english.toLowerCase()));
+                const snapshot = await get(duplicateQuery);
+                if (snapshot.exists()) {
+                    alert('该单词已存在');
+                    return;
+                }
+
+                // 添加新词
+                const newWordRef = push(wordsRef);
+                const newWord = {
+                    english: english.toLowerCase(),
+                    chinese: chinese,
+                    phonetic: phonetic || '无音标',
+                    uid: currentUser.uid, // 存储用户ID以便删除权限控制
+                    timestamp: serverTimestamp()
+                };
+
+                await set(newWordRef, newWord);
+                addWordForm.reset();
+            } catch (error) {
+                console.error(error);
+                alert('保存失败，请检查网络连接');
+            } finally {
+                isSubmitting = false;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // 允许在全局范围内访问 deleteWord 函数
+        window.deleteWord = deleteWord;
     </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .auth-container,
+        .add-word-form,
+        .card-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .auth-container h2,
+        .add-word-form h2 {
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .card-container {
+            columns: 2 300px;
+            gap: 15px;
+        }
+
+        .word-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            break-inside: avoid;
+            position: relative;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .word {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .phonetic {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .translation {
+            color: #444;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .pronunciation-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pronunciation-btns button {
+            flex: 1;
+            background: #28a745;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+            color: white;
+        }
+
+        .pronunciation-btns button:hover {
+            background: #1e7e34;
+        }
+
+        #loading {
+            display: none;
+            color: #666;
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+        }
+
+        .logout-btn {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+
+        .logout-btn:hover {
+            background: #5a6268;
+        }
+
+        .auth-toggle {
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 14px;
+        }
+
+        .auth-toggle:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- 认证区域 -->
+        <div class="auth-container" id="authContainer">
+            <h2 id="authTitle">登录</h2>
+            <form id="authForm">
+                <div class="input-group">
+                    <input type="email" id="email" placeholder="邮箱" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="密码" required>
+                </div>
+                <button type="submit" id="authBtn">登录</button>
+            </form>
+            <button class="auth-toggle" id="toggleAuth">没有账号？注册</button>
+        </div>
+
+        <!-- 添加单词区域 -->
+        <form class="add-word-form" id="addWordForm" style="display: none;">
+            <h2>添加新单词</h2>
+            <div class="input-group">
+                <input type="text" id="english" placeholder="输入英文单词" required>
+                <div id="loading">加载中...</div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="chinese" placeholder="中文释义" readonly>
+            </div>
+            <button type="submit" id="submitBtn">添加单词</button>
+            <button type="button" id="logoutBtn" class="logout-btn">退出登录</button>
+        </form>
+
+        <!-- 单词卡片展示区域 -->
+        <div class="card-container" id="cardContainer" style="display: none;">
+            <!-- 单词卡片将动态插入这里 -->
+        </div>
+    </div>
 </body>
 
 </html>
