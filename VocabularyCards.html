@@ -17,7 +17,9 @@
             signOut,
             onAuthStateChanged,
             GoogleAuthProvider,
-            signInWithPopup
+            signInWithPopup,
+            signInWithRedirect,
+            getRedirectResult
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
         import {
             getDatabase,
@@ -33,7 +35,7 @@
             set
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
-        // TODO: 替换为您自己的 Firebase 配置
+        // 替换为您自己的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
             authDomain: "vocabularycards-3447d.firebaseapp.com",
@@ -68,6 +70,9 @@
         let isSubmitting = false;
         let isLogin = true; // 标记当前是登录还是注册
 
+        // 初始化 GoogleAuthProvider
+        const provider = new GoogleAuthProvider();
+
         // 切换登录/注册模式
         toggleAuth.addEventListener('click', () => {
             isLogin = !isLogin;
@@ -101,18 +106,19 @@
             }
         });
 
-        // 初始化 GoogleAuthProvider
-        const provider = new GoogleAuthProvider();
-
         // Google 登录处理
         googleSignInBtn.addEventListener('click', async () => {
             try {
                 await signInWithPopup(auth, provider);
                 // 登录成功，由 onAuthStateChanged 处理界面更新
             } catch (error) {
-                console.error("Google 登录错误代码:", error.code);
-                console.error("错误详细信息:", error.message);
-                alert(`Google 登录失败: ${error.message}`);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    alert('认证弹出窗口被关闭，请重试。');
+                } else {
+                    console.error("Google 登录错误代码:", error.code);
+                    console.error("错误详细信息:", error.message);
+                    alert(`Google 登录失败: ${error.message}`);
+                }
             }
         });
 
