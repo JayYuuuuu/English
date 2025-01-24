@@ -6,18 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>云端单词卡片</title>
 
-    <!-- Firebase SDK (模块化) -->
+    <!-- FirebaseUI 依赖 -->
+    <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth__zh_CN.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css">
+
+    <!-- Firebase SDK -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import {
             getAuth,
-            signInWithEmailAndPassword,
-            createUserWithEmailAndPassword,
             signOut,
             onAuthStateChanged,
             GoogleAuthProvider,
-            signInWithPopup
+            EmailAuthProvider
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
         import {
             getDatabase,
@@ -33,109 +34,98 @@
             set
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
-        // Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
             authDomain: "vocabularycards-3447d.firebaseapp.com",
             databaseURL: "https://vocabularycards-3447d-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "vocabularycards-3447d",
-            storageBucket: "vocabularycards-3447d.firebasestorage.app",
+            storageBucket: "vocabularycards-3447d.appspot.com",
             messagingSenderId: "449077574534",
             appId: "1:449077574534:web:75ca12e415aa8107d34a07",
             measurementId: "G-ZML5070YJ6"
         };
 
-        // 初始化 Firebase
+        // 初始化Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const database = getDatabase(app);
         const wordsRef = ref(database, 'VocabularyCards');
 
-        // 获取页面元素
-        const authContainer = document.getElementById('authContainer');
-        const authForm = document.getElementById('authForm');
-        const authTitle = document.getElementById('authTitle');
-        const authBtn = document.getElementById('authBtn');
-        const toggleAuth = document.getElementById('toggleAuth');
-        const googleSignInBtn = document.getElementById('googleSignInBtn');
-        const addWordForm = document.getElementById('addWordForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const cardContainer = document.getElementById('cardContainer');
-
-        let isSubmitting = false;
-        let isLogin = true;
-
-        // 初始化Google登录提供程序
-        const googleProvider = new GoogleAuthProvider();
-        googleProvider.setCustomParameters({ prompt: 'select_account' });
-
-        // 切换登录/注册模式
-        toggleAuth.addEventListener('click', () => {
-            isLogin = !isLogin;
-            authTitle.textContent = isLogin ? '登录' : '注册';
-            authBtn.textContent = isLogin ? '登录' : '注册';
-            toggleAuth.textContent = isLogin ? '没有账号？注册' : '已有账号？登录';
-        });
-
-        // 邮箱登录/注册处理
-        authForm.addEventListener('submit', async e => {
-            e.preventDefault();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-
-            try {
-                if (isLogin) {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
-                    await createUserWithEmailAndPassword(auth, email, password);
+        // FirebaseUI配置
+        const uiConfig = {
+            signInSuccessUrl: '#', // 禁用自动重定向
+            signInOptions: [
+                {
+                    provider: GoogleAuthProvider.PROVIDER_ID,
+                    customParameters: {
+                        prompt: 'select_account'
+                    }
+                },
+                {
+                    provider: EmailAuthProvider.PROVIDER_ID,
+                    requireDisplayName: false,
+                    disableSignUp: {
+                        status: false
+                    }
                 }
-            } catch (error) {
-                alert(`操作失败: ${error.message}`);
+            ],
+            tosUrl: '#',
+            privacyPolicyUrl: '#',
+            signInFlow: 'popup',
+            credentialHelper: firebaseui.auth.CredentialHelper.NONE,
+            callbacks: {
+                signInSuccessWithAuthResult: () => false
             }
-        });
+        };
 
-        // Google登录处理（优化版）
-        googleSignInBtn.addEventListener('click', async () => {
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                console.log('Google用户登录成功:', result.user);
-            } catch (error) {
-                console.error("Google登录错误:", error);
-                let errorMessage = '登录失败，请重试';
-                
-                switch (error.code) {
-                    case 'auth/account-exists-with-different-credential':
-                        errorMessage = '该邮箱已通过其他方式注册，请使用邮箱登录';
-                        break;
-                    case 'auth/popup-closed-by-user':
-                        errorMessage = '登录窗口被关闭，请完整完成登录流程';
-                        break;
-                    case 'auth/unauthorized-domain':
-                        errorMessage = '当前域名未授权，请联系管理员';
-                        break;
-                }
-                alert(errorMessage);
+        // 初始化FirebaseUI
+        let ui = null;
+        const initAuthUI = () => {
+            if (!ui) {
+                ui = new firebaseui.auth.AuthUI(auth);
+                ui.start('#firebaseui-auth-container', uiConfig);
             }
-        });
-
-        // 退出登录处理
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                alert(`退出登录失败: ${error.message}`);
-            }
-        });
+        };
 
         // 认证状态监听
+        onAuthStateChanged(auth, (user) => {
+            const authContainer = document.getElementById('authContainer');
+            const loggedInView = document.getElementById('loggedInView');
+
+            if (user) {
+                authContainer.style.display = 'none';
+                loggedInView.style.display = 'block';
+                loadWords();
+            } else {
+                authContainer.style.display = 'block';
+                loggedInView.style.display = 'none';
+                initAuthUI();
+            }
+        });
+
+        // 退出登录
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                if (ui) {
+                    ui.delete();
+                    ui = null;
+                }
+            } catch (error) {
+                alert(`退出失败: ${error.message}`);
+            }
+        });
+
+        // 监听认证状态变化
         onAuthStateChanged(auth, user => {
             if (user) {
+                // 用户已登录
                 authContainer.style.display = 'none';
                 addWordForm.style.display = 'block';
                 cardContainer.style.display = 'block';
-                loadWords();
+                loadWords(); // 加载单词卡片
             } else {
+                // 用户未登录
                 authContainer.style.display = 'block';
                 addWordForm.style.display = 'none';
                 cardContainer.style.display = 'none';
@@ -160,46 +150,56 @@
             return card;
         }
 
-        // 删除单词功能
-        window.deleteWord = async (cardId, uid) => {
+        // 删除单词
+        async function deleteWord(cardId, uid) {
             const currentUser = auth.currentUser;
-            if (!currentUser || uid !== currentUser.uid) {
-                alert('无操作权限');
+            if (!currentUser) {
+                alert('请先登录');
                 return;
             }
 
-            if (confirm('确定删除该单词？')) {
-                try {
-                    await remove(ref(database, `VocabularyCards/${cardId}`));
-                } catch (error) {
-                    alert('删除失败');
-                }
+            if (uid !== currentUser.uid) {
+                alert('您没有权限删除这个单词');
+                return;
             }
-        };
+
+            if (!confirm(`确定要删除这个单词吗？`)) return;
+
+            try {
+                const wordRef = ref(database, `VocabularyCards/${cardId}`);
+                await remove(wordRef);
+            } catch (error) {
+                alert('删除失败，请检查网络连接');
+            }
+        }
 
         // 发音功能
-        window.playPronunciation = (word, type) => {
-            new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`)
-                .play()
-                .catch(() => alert('播放失败'));
-        };
+        function playPronunciation(word, type) {
+            const audio = new Audio(
+                `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`
+            );
+            audio.play().catch(() => alert('播放失败，请点击允许音频权限'));
+        }
 
-        // 加载单词数据
+        // 实时数据同步
         function loadWords() {
-            onValue(query(wordsRef, orderByChild('timestamp')), snapshot => {
-                cardContainer.innerHTML = '';
-                Object.entries(snapshot.val() || {}).forEach(([key, word]) => {
-                    cardContainer.appendChild(createCard({ ...word, key }));
+            const wordsQuery = query(wordsRef, orderByChild('timestamp'));
+            onValue(wordsQuery, snapshot => {
+                const wordsData = snapshot.val() || {};
+                const container = document.getElementById('cardContainer');
+                container.innerHTML = '';
+                Object.keys(wordsData).forEach(key => {
+                    const word = wordsData[key];
+                    container.appendChild(createCard({ ...word, key }));
                 });
             });
         }
 
         // 自动获取翻译和音标
         let fetchTimeout;
-        document.getElementById('english').addEventListener('input', async function() {
+        document.getElementById('english').addEventListener('input', async function () {
             clearTimeout(fetchTimeout);
             const english = this.value.trim();
-            
             if (!english) {
                 document.getElementById('chinese').value = '';
                 return;
@@ -208,15 +208,18 @@
             fetchTimeout = setTimeout(async () => {
                 document.getElementById('loading').style.display = 'block';
                 try {
+                    // 并行获取翻译和音标
                     const [translation, phonetic] = await Promise.all([
-                        fetch(`https://api.mymemory.translated.net/get?q=${english}&langpair=en|zh-CN`)
+                        fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(english)}&langpair=en|zh-CN`)
                             .then(r => r.json())
                             .then(d => d.responseData.translatedText || '翻译失败'),
-                        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${english}`)
+
+                        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(english)}`)
                             .then(r => r.ok ? r.json() : Promise.reject())
                             .then(d => d[0]?.phonetics[0]?.text?.replace(/[\/]/g, '') || '无音标')
                             .catch(() => '音标获取失败')
                     ]);
+
                     document.getElementById('chinese').value = `${translation} | ${phonetic}`;
                 } catch {
                     document.getElementById('chinese').value = '数据获取失败';
@@ -226,16 +229,15 @@
             }, 500);
         });
 
-        // 添加单词表单提交
+        // 表单提交处理
         addWordForm.addEventListener('submit', async e => {
             e.preventDefault();
             if (isSubmitting) return;
 
             const english = document.getElementById('english').value.trim();
             const [chinese, phonetic] = document.getElementById('chinese').value.split(' | ');
-            const currentUser = auth.currentUser;
 
-            if (!currentUser || !english || !chinese) {
+            if (!english || !chinese) {
                 alert('请填写完整信息');
                 return;
             }
@@ -244,31 +246,48 @@
             submitBtn.disabled = true;
 
             try {
-                const snapshot = await get(query(wordsRef, orderByChild('english'), equalTo(english.toLowerCase())));
-                if (snapshot.exists()) {
-                    alert('单词已存在');
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    alert('请先登录');
                     return;
                 }
 
-                await set(push(wordsRef), {
+                // 检查是否存在重复单词（忽略大小写）
+                const duplicateQuery = query(wordsRef, orderByChild('english'), equalTo(english.toLowerCase()));
+                const snapshot = await get(duplicateQuery);
+                if (snapshot.exists()) {
+                    alert('该单词已存在');
+                    return;
+                }
+
+                // 添加新词
+                const newWordRef = push(wordsRef);
+                const newWord = {
                     english: english.toLowerCase(),
-                    chinese,
+                    chinese: chinese,
                     phonetic: phonetic || '无音标',
-                    uid: currentUser.uid,
+                    uid: currentUser.uid, // 存储用户ID以便删除权限控制
                     timestamp: serverTimestamp()
-                });
+                };
+
+                await set(newWordRef, newWord);
                 addWordForm.reset();
             } catch (error) {
-                alert('保存失败');
+                console.error(error);
+                alert('保存失败，请检查网络连接');
             } finally {
                 isSubmitting = false;
                 submitBtn.disabled = false;
             }
         });
+
+        // 允许在全局范围内访问 deleteWord 函数
+        window.deleteWord = deleteWord;
+
     </script>
 
     <style>
-        /* 保持原有样式不变 */
+        /* 基础样式 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -286,9 +305,39 @@
             margin: 0 auto;
         }
 
-        .auth-container,
-        .add-word-form,
-        .card-container {
+        /* 登录容器 */
+        .auth-container {
+            background: white;
+            padding: 40px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        /* FirebaseUI样式覆盖 */
+        .firebaseui-container {
+            background: transparent;
+            box-shadow: none;
+            margin: 20px 0;
+        }
+
+        .firebaseui-idp-button {
+            min-width: 240px !important;
+            margin: 10px auto !important;
+            border-radius: 8px !important;
+        }
+
+        .firebaseui-idp-text {
+            font-size: 16px !important;
+        }
+
+        /* 已登录界面 */
+        #loggedInView {
+            display: none;
+        }
+
+        .add-word-form {
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -296,73 +345,84 @@
             margin-bottom: 25px;
         }
 
-        /* ...其他样式保持不变... */
+        /* 单词卡片样式 */
+        .card-container {
+            columns: 2 300px;
+            gap: 15px;
+        }
 
-        .google-btn {
-            background: #4285f4;
+        .word-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            break-inside: avoid;
+            position: relative;
+        }
+
+        /* 按钮样式 */
+        button {
+            background: #007bff;
             color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border: none;
             padding: 12px 24px;
-            border-radius: 4px;
-            font-weight: 500;
-            margin-top: 15px;
+            border-radius: 6px;
+            cursor: pointer;
             transition: background 0.3s;
         }
 
-        .google-btn:hover {
-            background: #357abd;
+        button:hover {
+            background: #0056b3;
         }
 
-        .google-btn img {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            background: white;
-            padding: 2px;
-            border-radius: 3px;
+        .logout-btn {
+            background: #6c757d;
+            margin-top: 20px;
+        }
+
+        /* 输入框样式 */
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <!-- 认证区域 -->
+        <!-- 登录界面 -->
         <div class="auth-container" id="authContainer">
-            <h2 id="authTitle">登录</h2>
-            <form id="authForm">
-                <div class="input-group">
-                    <input type="email" id="email" placeholder="邮箱" required>
-                </div>
-                <div class="input-group">
-                    <input type="password" id="password" placeholder="密码" required>
-                </div>
-                <button type="submit" id="authBtn">登录</button>
-            </form>
-            <button class="google-btn" id="googleSignInBtn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
-                使用 Google 登录
-            </button>
-            <button class="auth-toggle" id="toggleAuth">没有账号？注册</button>
+            <h2>欢迎使用云端单词卡片</h2>
+            <div id="firebaseui-auth-container"></div>
+            <p style="margin-top: 20px; color: #666;">支持Google账号和邮箱登录</p>
         </div>
 
-        <!-- 添加单词区域 -->
-        <form class="add-word-form" id="addWordForm" style="display: none;">
-            <h2>添加新单词</h2>
-            <div class="input-group">
-                <input type="text" id="english" placeholder="输入英文单词" required>
-                <div id="loading">加载中...</div>
-            </div>
-            <div class="input-group">
-                <input type="text" id="chinese" placeholder="中文释义" readonly>
-            </div>
-            <button type="submit" id="submitBtn">添加单词</button>
-            <button type="button" id="logoutBtn" class="logout-btn">退出登录</button>
-        </form>
+        <!-- 已登录界面 -->
+        <div id="loggedInView">
+            <!-- 添加单词表单 -->
+            <form class="add-word-form" id="addWordForm">
+                <h2>添加新单词</h2>
+                <div class="input-group">
+                    <input type="text" id="english" placeholder="输入英文单词" required>
+                    <div id="loading">加载中...</div>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="chinese" placeholder="中文释义" readonly>
+                </div>
+                <button type="submit" id="submitBtn">添加单词</button>
+            </form>
 
-        <!-- 单词卡片展示区域 -->
-        <div class="card-container" id="cardContainer" style="display: none;"></div>
+            <!-- 单词卡片容器 -->
+            <div class="card-container" id="cardContainer"></div>
+
+            <!-- 退出按钮 -->
+            <button id="logoutBtn" class="logout-btn">退出登录</button>
+        </div>
     </div>
 </body>
 
