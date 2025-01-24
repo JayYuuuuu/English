@@ -6,19 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>云端单词卡片</title>
 
-    <!-- FirebaseUI 依赖 -->
-    <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth__zh_CN.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css">
+    <!-- FirebaseUI CSS -->
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (模块化) -->
     <script type="module">
+        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import {
             getAuth,
             signOut,
-            onAuthStateChanged,
-            GoogleAuthProvider,
-            EmailAuthProvider
+            onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
         import {
             getDatabase,
@@ -34,6 +32,7 @@
             set
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
+        // TODO: 替换为您自己的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
             authDomain: "vocabularycards-3447d.firebaseapp.com",
@@ -45,74 +44,29 @@
             measurementId: "G-ZML5070YJ6"
         };
 
-        // 初始化Firebase
+        // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        window.auth = auth; // 使 auth 可在全局访问
         const database = getDatabase(app);
-        const wordsRef = ref(database, 'VocabularyCards');
+        const wordsRef = ref(database, 'VocabularyCards'); // 数据库路径可自定义
 
-        // FirebaseUI配置
-        const uiConfig = {
-            signInSuccessUrl: '#', // 禁用自动重定向
-            signInOptions: [
-                {
-                    provider: GoogleAuthProvider.PROVIDER_ID,
-                    customParameters: {
-                        prompt: 'select_account'
-                    }
-                },
-                {
-                    provider: EmailAuthProvider.PROVIDER_ID,
-                    requireDisplayName: false,
-                    disableSignUp: {
-                        status: false
-                    }
-                }
-            ],
-            tosUrl: '#',
-            privacyPolicyUrl: '#',
-            signInFlow: 'popup',
-            credentialHelper: firebaseui.auth.CredentialHelper.NONE,
-            callbacks: {
-                signInSuccessWithAuthResult: () => false
-            }
-        };
+        // 获取页面元素
+        const addWordForm = document.getElementById('addWordForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
 
-        // 初始化FirebaseUI
-        let ui = null;
-        const initAuthUI = () => {
-            if (!ui) {
-                ui = new firebaseui.auth.AuthUI(auth);
-                ui.start('#firebaseui-auth-container', uiConfig);
-            }
-        };
+        const cardContainer = document.getElementById('cardContainer');
 
-        // 认证状态监听
-        onAuthStateChanged(auth, (user) => {
-            const authContainer = document.getElementById('authContainer');
-            const loggedInView = document.getElementById('loggedInView');
+        let isSubmitting = false;
 
-            if (user) {
-                authContainer.style.display = 'none';
-                loggedInView.style.display = 'block';
-                loadWords();
-            } else {
-                authContainer.style.display = 'block';
-                loggedInView.style.display = 'none';
-                initAuthUI();
-            }
-        });
-
-        // 退出登录
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        // 退出登录处理
+        logoutBtn.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                if (ui) {
-                    ui.delete();
-                    ui = null;
-                }
+                // 退出登录成功，由 onAuthStateChanged 处理界面更新
             } catch (error) {
-                alert(`退出失败: ${error.message}`);
+                alert(`退出登录失败: ${error.message}`);
             }
         });
 
@@ -120,13 +74,13 @@
         onAuthStateChanged(auth, user => {
             if (user) {
                 // 用户已登录
-                authContainer.style.display = 'none';
+                document.getElementById('firebaseui-auth-container').style.display = 'none';
                 addWordForm.style.display = 'block';
                 cardContainer.style.display = 'block';
                 loadWords(); // 加载单词卡片
             } else {
                 // 用户未登录
-                authContainer.style.display = 'block';
+                document.getElementById('firebaseui-auth-container').style.display = 'block';
                 addWordForm.style.display = 'none';
                 cardContainer.style.display = 'none';
                 cardContainer.innerHTML = '';
@@ -283,11 +237,12 @@
 
         // 允许在全局范围内访问 deleteWord 函数
         window.deleteWord = deleteWord;
-
     </script>
 
+    <!-- FirebaseUI JS -->
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+
     <style>
-        /* 基础样式 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -305,39 +260,9 @@
             margin: 0 auto;
         }
 
-        /* 登录容器 */
-        .auth-container {
-            background: white;
-            padding: 40px 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        /* FirebaseUI样式覆盖 */
-        .firebaseui-container {
-            background: transparent;
-            box-shadow: none;
-            margin: 20px 0;
-        }
-
-        .firebaseui-idp-button {
-            min-width: 240px !important;
-            margin: 10px auto !important;
-            border-radius: 8px !important;
-        }
-
-        .firebaseui-idp-text {
-            font-size: 16px !important;
-        }
-
-        /* 已登录界面 */
-        #loggedInView {
-            display: none;
-        }
-
-        .add-word-form {
+        .auth-container,
+        .add-word-form,
+        .card-container {
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -345,7 +270,40 @@
             margin-bottom: 25px;
         }
 
-        /* 单词卡片样式 */
+        .add-word-form h2 {
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
         .card-container {
             columns: 2 300px;
             gap: 15px;
@@ -361,69 +319,169 @@
             position: relative;
         }
 
-        /* 按钮样式 */
-        button {
-            background: #007bff;
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
+            padding: 5px 10px;
+            border-radius: 4px;
             cursor: pointer;
             transition: background 0.3s;
         }
 
-        button:hover {
-            background: #0056b3;
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .word {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .phonetic {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .translation {
+            color: #444;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .pronunciation-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pronunciation-btns button {
+            flex: 1;
+            background: #28a745;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+            color: white;
+        }
+
+        .pronunciation-btns button:hover {
+            background: #1e7e34;
+        }
+
+        #loading {
+            display: none;
+            color: #666;
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
         }
 
         .logout-btn {
             background: #6c757d;
-            margin-top: 20px;
+            margin-left: 10px;
         }
 
-        /* 输入框样式 */
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
+        .logout-btn:hover {
+            background: #5a6268;
+        }
+
+        /* FirebaseUI 自定义样式（可选） */
+        #firebaseui-auth-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        #loader {
+            color: #666;
+            text-align: center;
+            margin-top: 20px;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <!-- 登录界面 -->
-        <div class="auth-container" id="authContainer">
-            <h2>欢迎使用云端单词卡片</h2>
-            <div id="firebaseui-auth-container"></div>
-            <p style="margin-top: 20px; color: #666;">支持Google账号和邮箱登录</p>
-        </div>
 
-        <!-- 已登录界面 -->
-        <div id="loggedInView">
-            <!-- 添加单词表单 -->
-            <form class="add-word-form" id="addWordForm">
-                <h2>添加新单词</h2>
-                <div class="input-group">
-                    <input type="text" id="english" placeholder="输入英文单词" required>
-                    <div id="loading">加载中...</div>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="chinese" placeholder="中文释义" readonly>
-                </div>
-                <button type="submit" id="submitBtn">添加单词</button>
-            </form>
+        <!-- FirebaseUI 登录界面 -->
+        <div id="firebaseui-auth-container"></div>
+        <div id="loader">加载中...</div>
 
-            <!-- 单词卡片容器 -->
-            <div class="card-container" id="cardContainer"></div>
+        <!-- 添加单词区域 -->
+        <form class="add-word-form" id="addWordForm" style="display: none;">
+            <h2>添加新单词</h2>
+            <div class="input-group">
+                <input type="text" id="english" placeholder="输入英文单词" required>
+                <div id="loading">加载中...</div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="chinese" placeholder="中文释义" readonly>
+            </div>
+            <button type="submit" id="submitBtn">添加单词</button>
+            <button type="button" id="logoutBtn" class="logout-btn">退出登录</button>
+        </form>
 
-            <!-- 退出按钮 -->
-            <button id="logoutBtn" class="logout-btn">退出登录</button>
+        <!-- 单词卡片展示区域 -->
+        <div class="card-container" id="cardContainer" style="display: none;">
+            <!-- 单词卡片将动态插入这里 -->
         </div>
     </div>
+
+    <!-- Initialize FirebaseUI -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 确保 auth 已初始化
+            if (!window.auth) {
+                console.error('Firebase auth 未初始化。');
+                return;
+            }
+
+            // 初始化 FirebaseUI Widget 使用 Firebase.
+            const ui = new firebaseui.auth.AuthUI(window.auth);
+
+            // FirebaseUI 配置
+            const uiConfig = {
+                callbacks: {
+                    signInSuccessWithAuthResult: function (authResult, redirectUrl) {
+                        // 用户成功登录后是否重定向
+                        // 返回 true 将自动重定向到 signInSuccessUrl
+                        return true;
+                    },
+                    uiShown: function () {
+                        // 登录界面渲染完毕后隐藏加载器
+                        document.getElementById('loader').style.display = 'none';
+                    }
+                },
+                // 使用弹窗方式而不是重定向
+                signInFlow: 'popup',
+                // 登录成功后重定向的 URL
+                signInSuccessUrl: window.location.href, // 重定向回当前页面
+                signInOptions: [
+                    // 列出您希望支持的登录提供者
+                    firebaseui.auth.GoogleAuthProvider.PROVIDER_ID,
+                    firebaseui.auth.FacebookAuthProvider.PROVIDER_ID,
+                    firebaseui.auth.TwitterAuthProvider.PROVIDER_ID,
+                    firebaseui.auth.GithubAuthProvider.PROVIDER_ID,
+                    firebaseui.auth.EmailAuthProvider.PROVIDER_ID,
+                    firebaseui.auth.PhoneAuthProvider.PROVIDER_ID
+                ],
+                // 服务条款 URL（请替换为您的实际 URL）
+                tosUrl: 'https://www.example.com/terms-of-service',
+                // 隐私政策 URL（请替换为您的实际 URL）
+                privacyPolicyUrl: 'https://www.example.com/privacy-policy'
+            };
+
+            // 启动 FirebaseUI
+            ui.start('#firebaseui-auth-container', uiConfig);
+        });
+    </script>
 </body>
 
 </html>
