@@ -1,435 +1,122 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>云端单词卡片</title>
-
-    <!-- FirebaseUI 依赖 -->
-    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
-
-    <!-- Firebase SDK -->
-    <script type="module">
-        // Firebase 初始化
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-        import {
-            getAuth,
-            signOut,
-            onAuthStateChanged,
-            GoogleAuthProvider,
-            EmailAuthProvider,
-            PhoneAuthProvider
-        } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-        import {
-            getDatabase,
-            ref,
-            push,
-            onValue,
-            query,
-            orderByChild,
-            equalTo,
-            remove,
-            serverTimestamp,
-            get,
-            set
-        } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-
-        // 配置你的 Firebase 项目信息
-        const firebaseConfig = {
-            apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
-            authDomain: "vocabularycards-3447d.firebaseapp.com",
-            databaseURL: "https://vocabularycards-3447d-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "vocabularycards-3447d",
-            storageBucket: "vocabularycards-3447d.appspot.com",
-            messagingSenderId: "449077574534",
-            appId: "1:449077574534:web:75ca12e415aa8107d34a07",
-            measurementId: "G-ZML5070YJ6"
-        };
-
-        // 初始化 Firebase 服务
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const database = getDatabase(app);
-        const wordsRef = ref(database, 'VocabularyCards');
-
-        // 页面元素引用
-        const authContainer = document.getElementById('authContainer');
-        const addWordForm = document.getElementById('addWordForm');
-        const cardContainer = document.getElementById('cardContainer');
-        const logoutBtn = document.getElementById('logoutBtn');
-
-        // FirebaseUI 配置
-        const uiConfig = {
-            signInFlow: 'popup',
-            signInSuccessUrl: '/',
-            signInOptions: [
-                {
-                    provider: GoogleAuthProvider.PROVIDER_ID,
-                    customParameters: { prompt: 'select_account' }
-                },
-                {
-                    provider: EmailAuthProvider.PROVIDER_ID,
-                    requireDisplayName: false
-                },
-                {
-                    provider: PhoneAuthProvider.PROVIDER_ID,
-                    recaptchaParameters: { size: "invisible" },
-                    defaultCountry: 'CN'
-                }
-            ],
-            callbacks: {
-                signInSuccessWithAuthResult: () => {
-                    authContainer.style.display = 'none';
-                    return false;
-                },
-                uiShown: () => {
-                    document.getElementById('loading').style.display = 'none';
-                }
-            },
-            tosUrl: '/terms',
-            privacyPolicyUrl: '/privacy'
-        };
-
-        // 初始化 FirebaseUI
-        const ui = new firebaseui.auth.AuthUI(auth);
-        document.getElementById('loading').style.display = 'block';
-        ui.start('#firebaseui-auth-container', uiConfig);
-
-        // 认证状态监听
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                addWordForm.style.display = 'block';
-                cardContainer.style.display = 'block';
-                loadWords();
-            } else {
-                addWordForm.style.display = 'none';
-                cardContainer.style.display = 'none';
-                cardContainer.innerHTML = '';
-                authContainer.style.display = 'block';
-            }
-        });
-
-        // 退出登录处理
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                ui.reset();
-            } catch (error) {
-                alert(`退出失败: ${error.message}`);
-            }
-        });
-
-        // 创建单词卡片
-        function createCard(wordData) {
-            const card = document.createElement('div');
-            card.className = 'word-card';
-            card.innerHTML = `
-                <button class="delete-btn" onclick="deleteWord('${wordData.key}', '${wordData.uid}')">×</button>
-                <div class="word">${wordData.english}</div>
-                <div class="phonetic">${wordData.phonetic || '无音标'}</div>
-                <div class="translation">${wordData.chinese}</div>
-                <div class="pronunciation-btns">
-                    <button onclick="playPronunciation('${wordData.english}', 'UK')">英音发音</button>
-                    <button onclick="playPronunciation('${wordData.english}', 'US')">美音发音</button>
-                </div>
-            `;
-            return card;
-        }
-
-        // 删除单词功能
-        window.deleteWord = async (cardId, uid) => {
-            const user = auth.currentUser;
-            if (!user || user.uid !== uid) {
-                alert('操作未授权');
-                return;
-            }
-
-            if (!confirm('确认删除？')) return;
-
-            try {
-                const wordRef = ref(database, `VocabularyCards/${cardId}`);
-                await remove(wordRef);
-            } catch (error) {
-                alert('删除失败: ' + error.message);
-            }
-        };
-
-        // 发音功能
-        window.playPronunciation = (word, type) => {
-            new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`)
-                .play()
-                .catch(() => alert('请允许音频播放权限'));
-        };
-
-        // 加载单词数据
-        function loadWords() {
-            const wordsQuery = query(wordsRef, orderByChild('timestamp'));
-            onValue(wordsQuery, (snapshot) => {
-                cardContainer.innerHTML = '';
-                snapshot.forEach((childSnapshot) => {
-                    const wordData = childSnapshot.val();
-                    cardContainer.appendChild(createCard({
-                        ...wordData,
-                        key: childSnapshot.key
-                    }));
-                });
-            });
-        }
-
-        // 自动翻译功能
-        let fetchTimeout;
-        document.getElementById('english').addEventListener('input', function() {
-            clearTimeout(fetchTimeout);
-            const english = this.value.trim();
-            
-            if (!english) {
-                document.getElementById('chinese').value = '';
-                return;
-            }
-
-            fetchTimeout = setTimeout(async () => {
-                document.getElementById('loading').style.display = 'block';
-                try {
-                    const [transRes, dictRes] = await Promise.all([
-                        fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(english)}&langpair=en|zh-CN`),
-                        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(english)}`)
-                    ]);
-
-                    const translation = await transRes.json();
-                    const dictData = await dictRes.json().catch(() => null);
-
-                    document.getElementById('chinese').value = [
-                        translation.responseData?.translatedText || '无翻译',
-                        dictData?.[0]?.phonetics?.[0]?.text || '无音标'
-                    ].join(' | ');
-                } catch {
-                    document.getElementById('chinese').value = '数据获取失败';
-                } finally {
-                    document.getElementById('loading').style.display = 'none';
-                }
-            }, 500);
-        });
-
-        // 提交新单词
-        addWordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const english = document.getElementById('english').value.trim().toLowerCase();
-            const [chinese, phonetic] = document.getElementById('chinese').value.split(' | ');
-            
-            if (!english || !chinese) {
-                alert('请填写完整信息');
-                return;
-            }
-
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-
-            try {
-                // 检查重复单词
-                const duplicateQuery = query(wordsRef, orderByChild('english'), equalTo(english));
-                const snapshot = await get(duplicateQuery);
-                if (snapshot.exists()) {
-                    alert('单词已存在');
-                    return;
-                }
-
-                // 保存新单词
-                const newWordRef = push(wordsRef);
-                await set(newWordRef, {
-                    english: english,
-                    chinese: chinese,
-                    phonetic: phonetic || '',
-                    uid: auth.currentUser.uid,
-                    timestamp: serverTimestamp()
-                });
-
-                addWordForm.reset();
-            } catch (error) {
-                alert('保存失败: ' + error.message);
-            } finally {
-                submitBtn.disabled = false;
-            }
-        });
-    </script>
-
+    <title>FirebaseUI Login & Realtime Database</title>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.css" />
     <style>
-        /* 基础样式 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px;
-            background: #f0f2f5;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* 认证容器 */
-        #authContainer {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-            text-align: center;
+            font-family: Arial, sans-serif;
+            margin: 20px;
         }
 
         #firebaseui-auth-container {
-            margin: 1rem 0;
+            margin-top: 20px;
         }
 
-        .firebaseui-idp-button {
-            border-radius: 8px !important;
-            margin: 0.5rem 0 !important;
-        }
-
-        /* 添加单词表单 */
-        #addWordForm {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
-
-        .input-group {
-            margin-bottom: 1.5rem;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus {
-            border-color: #2196F3;
-            outline: none;
-        }
-
-        /* 单词卡片 */
-        #cardContainer {
-            columns: 2;
-            gap: 1rem;
-        }
-
-        .word-card {
-            background: white;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            break-inside: avoid;
-            position: relative;
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .delete-btn:hover {
-            background: #cc0000;
-        }
-
-        .word {
-            font-size: 1.5rem;
-            color: #1a237e;
-            margin-bottom: 0.5rem;
-        }
-
-        .phonetic {
-            color: #666;
-            font-style: italic;
-            margin-bottom: 1rem;
-        }
-
-        .translation {
-            color: #2e7d32;
-            font-size: 1.1rem;
-        }
-
-        /* 按钮样式 */
-        button {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin: 0.5rem;
-        }
-
-        button:hover {
-            background: #1976D2;
-            transform: translateY(-1px);
-        }
-
-        #logoutBtn {
-            background: #666;
-        }
-
-        #logoutBtn:hover {
-            background: #444;
-        }
-
-        /* 加载提示 */
-        #loading {
-            color: #666;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
+        #data-container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <!-- 登录界面 -->
-        <div id="authContainer">
-            <h2>欢迎使用智能单词卡</h2>
-            <div id="firebaseui-auth-container"></div>
-            <div id="loading">正在加载登录选项...</div>
-        </div>
-
-        <!-- 添加单词表单 -->
-        <form id="addWordForm" style="display: none;">
-            <h2>添加新单词</h2>
-            <div class="input-group">
-                <input type="text" id="english" placeholder="输入英文单词" required>
-                <div id="loading">获取数据中...</div>
-            </div>
-            <div class="input-group">
-                <input type="text" id="chinese" placeholder="自动获取翻译和音标" readonly>
-            </div>
-            <button type="submit" id="submitBtn">添加单词</button>
-            <button type="button" id="logoutBtn">退出登录</button>
-        </form>
-
-        <!-- 单词展示区 -->
-        <div id="cardContainer" style="display: none;"></div>
+    <h1>FirebaseUI Login & Realtime Database</h1>
+    <div id="firebaseui-auth-container"></div>
+    <div id="data-container">
+        <p>登录后，这里将显示 Firebase 实时数据库中的数据。</p>
     </div>
+
+    <!-- Firebase 核心库 -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+    <!-- Firebase 身份验证库 -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
+    <!-- FirebaseUI 的 JS 和 CSS -->
+    <link rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.css" />
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.js"></script>
+
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
+            authDomain: "vocabularycards-3447d.firebaseapp.com",
+            databaseURL: "https://vocabularycards-3447d-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "vocabularycards-3447d",
+            storageBucket: "vocabularycards-3447d.firebasestorage.app",
+            messagingSenderId: "449077574534",
+            appId: "1:449077574534:web:75ca12e415aa8107d34a07",
+            measurementId: "G-ZML5070YJ6"
+        };
+
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // 初始化 FirebaseUI
+        const ui = new firebaseui.auth.AuthUI(firebase.auth());
+
+        // FirebaseUI 配置
+        const uiConfig = {
+            signInSuccessUrl: '/', // 登录成功后不重定向
+            signInOptions: [
+                firebase.auth.EmailAuthProvider.PROVIDER_ID, // 电子邮件/密码登录
+                firebase.auth.GoogleAuthProvider.PROVIDER_ID // Google 登录
+            ],
+            callbacks: {
+                signInSuccessWithAuthResult: function (authResult, redirectUrl) {
+                    // 登录成功后的回调
+                    console.log("User signed in:", authResult.user);
+                    fetchDataFromDatabase(); // 登录成功后获取数据
+                    return false; // 不重定向
+                },
+                signInFailure: function (error) {
+                    // 处理登录失败
+                    console.error("Sign-in error:", error);
+                }
+            }
+        };
+
+        // 渲染登录界面
+        ui.start('#firebaseui-auth-container', uiConfig);
+
+        // 监听身份验证状态
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // 用户已登录
+                console.log("User is logged in:", user);
+                fetchDataFromDatabase(); // 获取数据
+            } else {
+                // 用户未登录
+                console.log("User is logged out");
+                document.getElementById('data-container').innerHTML = "<p>请登录以访问数据。</p>";
+            }
+        });
+
+        // 从 Firebase 实时数据库获取数据
+        function fetchDataFromDatabase() {
+            const userId = firebase.auth().currentUser.uid; // 获取当前用户的 UID
+            const database = firebase.database();
+            const userRef = database.ref('users/' + userId); // 假设数据存储在 "users/{userId}" 路径下
+
+            userRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    // 显示数据
+                    document.getElementById('data-container').innerHTML = `
+                        <h3>用户数据：</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    document.getElementById('data-container').innerHTML = "<p>没有找到用户数据。</p>";
+                }
+            }, (error) => {
+                console.error("Error fetching data:", error);
+                document.getElementById('data-container').innerHTML = "<p>获取数据时出错。</p>";
+            });
+        }
+    </script>
 </body>
 
 </html>
