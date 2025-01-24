@@ -1,129 +1,147 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>云端单词卡片</title>
-
-    <!-- Firebase 8.x SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <title>单词卡片系统 - Google登录版</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
     <style>
+        /* 基础样式 */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         }
 
         body {
-            font-family: Arial, sans-serif;
+            background: #f5f5f5;
             padding: 20px;
-            background-color: #f5f5f5;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* 身份验证容器 */
-        #authContainer {
-            display: none;
+        /* 登录容器 */
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             text-align: center;
-            margin-top: 100px;
         }
 
-        #authContainer button {
+        /* Google登录按钮 */
+        .google-login-btn {
             background: #4285F4;
             color: white;
-            border: none;
             padding: 12px 24px;
-            border-radius: 6px;
+            border: none;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 30px auto;
             transition: background 0.3s;
         }
 
-        #authContainer button:hover {
-            background: #357ae8;
+        .google-login-btn:hover {
+            background: #357ABD;
         }
 
-        /* 应用主容器 */
-        #appContainer {
-            display: none;
+        .google-logo {
+            width: 20px;
+            height: 20px;
         }
 
-        /* 登出按钮 */
-        #signOutButton {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-            float: right;
-            margin-bottom: 10px;
+        /* 主内容区域 */
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none; /* 默认隐藏 */
         }
 
-        #signOutButton:hover {
-            background: #c82333;
-        }
-
-        .add-word-form {
+        /* 用户信息栏 */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 15px;
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 25px;
-            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        /* 添加表单 */
+        .add-form {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
         }
 
         .input-group {
-            margin-bottom: 15px;
-            position: relative;
+            margin-bottom: 20px;
         }
 
         input[type="text"] {
             width: 100%;
             padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #4285F4;
+            outline: none;
         }
 
         button[type="submit"] {
-            background: #007bff;
+            background: #4285F4;
             color: white;
+            padding: 12px 30px;
             border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background 0.3s;
-            width: 100%;
             font-size: 16px;
+            width: 100%;
+            transition: background 0.3s;
         }
 
         button[type="submit"]:hover {
-            background: #0056b3;
+            background: #357ABD;
         }
 
+        /* 卡片容器 */
         .card-container {
             columns: 2 300px;
-            gap: 15px;
+            gap: 20px;
         }
 
+        /* 单词卡片 */
         .word-card {
             background: white;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
             break-inside: avoid;
             position: relative;
         }
@@ -135,16 +153,19 @@
             background: #dc3545;
             color: white;
             border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
-            line-height: 1;
+            transition: background 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #bb2d3b;
         }
 
         .word {
             font-size: 24px;
-            font-weight: bold;
+            font-weight: 600;
             color: #333;
             margin-bottom: 8px;
         }
@@ -169,81 +190,89 @@
 
         .pronunciation-btns button {
             flex: 1;
-            background: #28a745;
+            background: #34a853;
+            color: white;
             padding: 10px;
             border: none;
-            border-radius: 4px;
-            color: white;
+            border-radius: 6px;
             cursor: pointer;
             transition: background 0.3s;
-            font-size: 14px;
         }
 
         .pronunciation-btns button:hover {
-            background: #1e7e34;
+            background: #2d8d47;
         }
 
+        /* 加载提示 */
         #loading {
             display: none;
             color: #666;
-            position: absolute;
-            right: 20px;
-            bottom: 20px;
-            font-size: 14px;
+            text-align: center;
+            padding: 15px;
         }
 
-        /* 响应式设计优化 */
         @media (max-width: 768px) {
             .card-container {
-                columns: 1 300px;
+                columns: 1;
             }
-
-            #signOutButton {
-                float: none;
-                display: block;
-                margin: 0 auto 20px auto;
+            
+            .login-container {
+                margin: 20px;
+                padding: 25px;
             }
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <!-- 身份验证容器 -->
-        <div id="authContainer">
-            <h2>欢迎使用云端单词卡片</h2>
-            <p>请使用Google账号登录以继续</p>
-            <button id="signInButton">使用Google登录</button>
-        </div>
+    <!-- 登录界面 -->
+    <div class="login-container" id="loginContainer">
+        <h2>欢迎使用单词卡片系统</h2>
+        <p style="color: #666; margin: 20px 0;">请使用Google账号登录</p>
+        <button class="google-login-btn" id="googleLoginBtn">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                 class="google-logo"
+                 alt="Google logo">
+            使用 Google 登录
+        </button>
+    </div>
 
-        <!-- 应用主容器 -->
-        <div id="appContainer">
-            <button id="signOutButton">登出</button>
-            <form class="add-word-form" id="addWordForm">
-                <h2>添加新单词</h2>
-                <div class="input-group">
-                    <input type="text" id="english" placeholder="输入英文单词" required>
-                    <div id="loading">加载中...</div>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="chinese" placeholder="中文释义 | 音标" readonly>
-                </div>
-                <button type="submit" id="submitBtn">添加单词</button>
-            </form>
-
-            <div class="card-container" id="cardContainer">
-                <!-- 单词卡片将动态插入这里 -->
+    <!-- 主内容 -->
+    <div class="content" id="mainContent">
+        <!-- 用户信息 -->
+        <div class="user-info">
+            <img id="userAvatar" class="user-avatar" alt="用户头像">
+            <div>
+                <div id="userName" style="font-weight: 500;"></div>
+                <button onclick="firebase.auth().signOut()" 
+                        style="background: none; border: none; color: #666; cursor: pointer; padding: 5px 0;">
+                    退出登录
+                </button>
             </div>
         </div>
+
+        <!-- 添加表单 -->
+        <form class="add-form" id="addWordForm">
+            <div class="input-group">
+                <input type="text" id="english" placeholder="输入英文单词" required>
+            </div>
+            <div class="input-group">
+                <input type="text" id="chinese" placeholder="中文释义" readonly>
+            </div>
+            <button type="submit">添加单词</button>
+        </form>
+
+        <!-- 加载提示 -->
+        <div id="loading">加载中...</div>
+
+        <!-- 卡片容器 -->
+        <div class="card-container" id="cardContainer"></div>
     </div>
 
     <script>
-        // ===========================================
-        // ⚠️ 需要替换的 Firebase 配置（必须修改）
-        // 从Firebase控制台获取以下信息：
-        // 1. 创建项目 → 2. 添加Web应用 → 3. 复制配置
-        // ===========================================
-        var firebaseConfig = {
+        // ========================
+        // Firebase 配置（必须替换）
+        // ========================
+        const firebaseConfig = {
             apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
             authDomain: "vocabularycards-3447d.firebaseapp.com",
             databaseURL: "https://vocabularycards-3447d-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -254,233 +283,175 @@
             measurementId: "G-ZML5070YJ6"
         };
 
-        // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
-        var auth = firebase.auth();
-        var database = firebase.database();
+        // ========================
+        // 初始化 Firebase
+        // ========================
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
 
-        // 获取DOM元素
-        var signInButton = document.getElementById('signInButton');
-        var signOutButton = document.getElementById('signOutButton');
-        var authContainer = document.getElementById('authContainer');
-        var appContainer = document.getElementById('appContainer');
-        var addWordForm = document.getElementById('addWordForm');
-        var cardContainer = document.getElementById('cardContainer');
-        var loadingIndicator = document.getElementById('loading');
+        // ========================
+        // 全局引用
+        // ========================
+        const loginContainer = document.getElementById('loginContainer');
+        const mainContent = document.getElementById('mainContent');
+        const addWordForm = document.getElementById('addWordForm');
+        const cardContainer = document.getElementById('cardContainer');
+        const loading = document.getElementById('loading');
 
-        // 登录功能
-        signInButton.addEventListener('click', function () {
-            var provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then(function (result) {
-                    console.log("登录成功:", result.user);
-                })
-                .catch(function (error) {
-                    console.error("登录失败:", error);
-                    alert("登录失败: " + error.message);
-                });
-        });
-
-        // 登出功能
-        signOutButton.addEventListener('click', function () {
-            auth.signOut()
-                .then(function () {
-                    console.log("已登出");
-                })
-                .catch(function (error) {
-                    console.error("登出失败:", error);
-                    alert("登出失败: " + error.message);
-                });
-        });
-
-        // 监听认证状态变化
-        auth.onAuthStateChanged(function (user) {
-            if (user) {
-                // 用户已登录
-                authContainer.style.display = 'none';
-                appContainer.style.display = 'block';
-                loadVocabularyCards();
+        // ========================
+        // 登录状态监听
+        // ========================
+        auth.onAuthStateChanged(user => {
+            if (user && user.providerData[0].providerId === 'google.com') {
+                // 用户已通过Google登录
+                loginContainer.style.display = 'none';
+                mainContent.style.display = 'block';
+                
+                // 显示用户信息
+                document.getElementById('userAvatar').src = user.photoURL;
+                document.getElementById('userName').textContent = user.displayName;
+                
+                // 初始化数据加载
+                loadWords();
             } else {
-                // 用户未登录
-                authContainer.style.display = 'block';
-                appContainer.style.display = 'none';
-                cardContainer.innerHTML = '';
+                // 用户未登录或非Google登录
+                loginContainer.style.display = 'block';
+                mainContent.style.display = 'none';
+                if (user) auth.signOut(); // 强制退出非Google登录用户
             }
         });
 
-        // 加载单词卡片
-        function loadVocabularyCards() {
-            var wordsRef = database.ref('VocabularyCards');
-
-            wordsRef.on('value', function (snapshot) {
-                var words = snapshot.val() || {};
-                cardContainer.innerHTML = '';
-
-                for (var wordId in words) {
-                    if (words.hasOwnProperty(wordId)) {
-                        var wordData = words[wordId];
-                        cardContainer.appendChild(createCard(wordId, wordData));
-                    }
-                }
-            });
-        }
-
-        // 创建单词卡片
-        function createCard(wordId, wordData) {
-            var card = document.createElement('div');
-            card.className = 'word-card';
-            card.setAttribute('data-id', wordId);
-
-            card.innerHTML = `
-                <button class="delete-btn">×</button>
-                <div class="word">${wordData.english}</div>
-                <div class="phonetic">${wordData.phonetic || '暂无音标'}</div>
-                <div class="translation">${wordData.chinese}</div>
-                <div class="pronunciation-btns">
-                    <button class="pronunciation-uk">英音发音</button>
-                    <button class="pronunciation-us">美音发音</button>
-                </div>
-            `;
-
-            // 添加事件监听器
-            var deleteBtn = card.querySelector('.delete-btn');
-            var pronunciationUKBtn = card.querySelector('.pronunciation-uk');
-            var pronunciationUSBtn = card.querySelector('.pronunciation-us');
-
-            deleteBtn.addEventListener('click', function () {
-                deleteWord(wordId);
-            });
-
-            pronunciationUKBtn.addEventListener('click', function () {
-                playPronunciation(wordData.english, 'UK');
-            });
-
-            pronunciationUSBtn.addEventListener('click', function () {
-                playPronunciation(wordData.english, 'US');
-            });
-
-            return card;
-        }
-
-        // 删除单词
-        function deleteWord(wordId) {
-            if (!confirm(`确定要删除该单词吗？`)) return;
-
-            database.ref('VocabularyCards/' + wordId).remove()
-                .then(function () {
-                    alert('删除成功');
-                })
-                .catch(function (error) {
-                    console.error("删除失败:", error);
-                    alert('删除失败: ' + error.message);
+        // ========================
+        // Google 登录处理
+        // ========================
+        document.getElementById('googleLoginBtn').addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .catch(error => {
+                    console.error('登录失败:', error);
+                    alert('登录失败: ' + error.message);
                 });
-        }
-
-        // 发音功能
-        function playPronunciation(word, type) {
-            var audio = new Audio(
-                `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`
-            );
-            audio.play().catch(function () {
-                alert('播放失败，请点击允许音频权限');
-            });
-        }
-
-        // 自动获取翻译和音标
-        var fetchTimeout;
-        addWordForm.querySelector('#english').addEventListener('input', function () {
-            clearTimeout(fetchTimeout);
-            var english = this.value.trim();
-            var chineseInput = addWordForm.querySelector('#chinese');
-
-            if (!english) {
-                chineseInput.value = '';
-                return;
-            }
-
-            fetchTimeout = setTimeout(function () {
-                loadingIndicator.style.display = 'block';
-                // 并行获取翻译和音标
-                Promise.all([
-                    fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(english)}&langpair=en|zh-CN`)
-                        .then(function (response) {
-                            return response.json();
-                        })
-                        .then(function (data) {
-                            return data.responseData.translatedText || '翻译失败';
-                        }),
-
-                    fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(english)}`)
-                        .then(function (response) {
-                            if (response.ok) return response.json();
-                            throw new Error('音标获取失败');
-                        })
-                        .then(function (data) {
-                            return (data[0] && data[0].phonetics && data[0].phonetics[0] && data[0].phonetics[0].text.replace(/[\/]/g, '')) || '无音标';
-                        })
-                        .catch(function () {
-                            return '音标获取失败';
-                        })
-                ]).then(function (results) {
-                    chineseInput.value = results[0] + ' | ' + results[1];
-                }).catch(function () {
-                    chineseInput.value = '数据获取失败';
-                }).finally(function () {
-                    loadingIndicator.style.display = 'none';
-                });
-            }, 500);
         });
 
-        // 表单提交处理
-        addWordForm.addEventListener('submit', function (e) {
+        // ========================
+        // 数据操作
+        // ========================
+        async function loadWords() {
+            loading.style.display = 'block';
+            try {
+                const snapshot = await database.ref('words').once('value');
+                renderCards(snapshot.val() || []);
+            } catch (error) {
+                alert('加载数据失败，请刷新重试');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // ========================
+        // 表单提交
+        // ========================
+        addWordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            var englishInput = addWordForm.querySelector('#english');
-            var chineseInput = addWordForm.querySelector('#chinese');
-            var submitBtn = addWordForm.querySelector('#submitBtn');
-
-            var english = englishInput.value.trim();
-            var chinesePhonetic = chineseInput.value.trim();
-            var chinese = chinesePhonetic.split(' | ')[0];
-            var phonetic = chinesePhonetic.split(' | ')[1] || '无音标';
+            
+            const english = document.getElementById('english').value.trim();
+            const chinese = document.getElementById('chinese').value.trim();
 
             if (!english || !chinese) {
                 alert('请填写完整信息');
                 return;
             }
 
-            submitBtn.disabled = true;
+            try {
+                const newWord = {
+                    english,
+                    chinese,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    uid: auth.currentUser.uid
+                };
 
-            // 检查是否存在重复单词（不区分大小写）
-            database.ref('VocabularyCards').orderByChild('english').equalTo(english.toLowerCase()).once('value')
-                .then(function (snapshot) {
-                    if (snapshot.exists()) {
-                        alert('该单词已存在');
-                        throw new Error('重复单词');
-                    } else {
-                        // 添加新词，使用push生成唯一ID
-                        return database.ref('VocabularyCards').push({
-                            english: english,
-                            chinese: chinese,
-                            phonetic: phonetic
-                        });
-                    }
-                })
-                .then(function () {
-                    alert('添加成功');
-                    addWordForm.reset();
-                })
-                .catch(function (error) {
-                    if (error.message !== '重复单词') {
-                        console.error("保存失败:", error);
-                        alert('保存失败: ' + error.message);
-                    }
-                })
-                .finally(function () {
-                    submitBtn.disabled = false;
-                });
+                await database.ref('words').push(newWord);
+                addWordForm.reset();
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+            }
+        });
+
+        // ========================
+        // 卡片渲染
+        // ========================
+        function renderCards(words) {
+            cardContainer.innerHTML = '';
+            
+            Object.entries(words).forEach(([key, word]) => {
+                const card = document.createElement('div');
+                card.className = 'word-card';
+                card.innerHTML = `
+                    <button class="delete-btn" onclick="deleteWord('${key}')">删除</button>
+                    <div class="word">${word.english}</div>
+                    <div class="phonetic">${word.phonetic || '暂无音标'}</div>
+                    <div class="translation">${word.chinese}</div>
+                    <div class="pronunciation-btns">
+                        <button onclick="playPronunciation('${word.english}', 'UK')">英音发音</button>
+                        <button onclick="playPronunciation('${word.english}', 'US')">美音发音</button>
+                    </div>
+                `;
+                cardContainer.appendChild(card);
+            });
+        }
+
+        // ========================
+        // 删除单词
+        // ========================
+        async function deleteWord(key) {
+            if (!confirm('确定要删除这个单词吗？')) return;
+            
+            try {
+                await database.ref(`words/${key}`).remove();
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+
+        // ========================
+        // 发音功能
+        // ========================
+        function playPronunciation(word, type) {
+            const audio = new Audio(
+                `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`
+            );
+            audio.play().catch(() => alert('播放失败，请允许音频权限'));
+        }
+
+        // ========================
+        // 自动翻译和音标获取
+        // ========================
+        let fetchTimeout;
+        document.getElementById('english').addEventListener('input', async function() {
+            clearTimeout(fetchTimeout);
+            const english = this.value.trim();
+            if (!english) return;
+
+            fetchTimeout = setTimeout(async () => {
+                document.getElementById('chinese').value = '获取数据中...';
+                try {
+                    const [translation, phonetic] = await Promise.all([
+                        fetch(`https://api.mymemory.translated.net/get?q=${english}&langpair=en|zh-CN`)
+                            .then(r => r.json())
+                            .then(d => d.responseData.translatedText),
+                        
+                        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${english}`)
+                            .then(r => r.ok ? r.json() : '')
+                            .then(d => d[0]?.phonetics[0]?.text.replace(/\//g, ''))
+                    ]);
+
+                    document.getElementById('chinese').value = `${translation || '翻译失败'} | ${phonetic || '无音标'}`;
+                } catch {
+                    document.getElementById('chinese').value = '数据获取失败';
+                }
+            }, 500);
         });
     </script>
 </body>
-
 </html>
