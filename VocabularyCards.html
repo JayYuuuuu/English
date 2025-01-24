@@ -39,7 +39,7 @@
             authDomain: "vocabularycards-3447d.firebaseapp.com",
             databaseURL: "https://vocabularycards-3447d-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "vocabularycards-3447d",
-            storageBucket: "vocabularycards-3447d.appspot.com",
+            storageBucket: "vocabularycards-3447d.firebasestorage.app",
             messagingSenderId: "449077574534",
             appId: "1:449077574534:web:75ca12e415aa8107d34a07",
             measurementId: "G-ZML5070YJ6"
@@ -101,13 +101,17 @@
             }
         });
 
+        // 初始化 GoogleAuthProvider
+        const provider = new GoogleAuthProvider();
+
         // Google 登录处理
         googleSignInBtn.addEventListener('click', async () => {
-            const provider = new GoogleAuthProvider();
             try {
                 await signInWithPopup(auth, provider);
                 // 登录成功，由 onAuthStateChanged 处理界面更新
             } catch (error) {
+                console.error("Google 登录错误代码:", error.code);
+                console.error("错误详细信息:", error.message);
                 alert(`Google 登录失败: ${error.message}`);
             }
         });
