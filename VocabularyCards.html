@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云端单词卡片</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .add-word-form {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .card-container {
+            columns: 2 300px;
+            gap: 15px;
+        }
+
+        .word-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            break-inside: avoid;
+            position: relative;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .word {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .phonetic {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .translation {
+            color: #444;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .pronunciation-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pronunciation-btns button {
+            flex: 1;
+            background: #28a745;
+            padding: 10px;
+        }
+
+        #loading {
+            display: none;
+            color: #666;
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <form class="add-word-form" id="addWordForm">
+            <h2>添加新单词</h2>
+            <div class="input-group">
+                <input type="text" id="english" placeholder="输入英文单词" required>
+                <div id="loading">加载中...</div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="chinese" placeholder="中文释义" readonly>
+            </div>
+            <button type="submit" id="submitBtn">添加单词</button>
+        </form>
+
+        <div class="card-container" id="cardContainer">
+            <!-- 单词卡片将动态插入这里 -->
+        </div>
+    </div>
+
+    <script>
+        // ===========================================
+        // ⚠️ 需要替换的 Firebase 配置（必须修改）
+        // 从Firebase控制台获取以下信息：
+        // 1. 创建项目 → 2. 添加Web应用 → 3. 复制配置
+        // ===========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
+            authDomain: "vocabularycards-3447d.firebaseapp.com",
+            databaseURL: "https://vocabularycards-3447d-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "vocabularycards-3447d",
+            storageBucket: "vocabularycards-3447d.firebasestorage.app",
+            messagingSenderId: "449077574534",
+            appId: "1:449077574534:web:75ca12e415aa8107d34a07",
+            measurementId: "G-ZML5070YJ6"
+        };
+
+        // 初始化 Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const wordsRef = database.ref('VocabularyCards');  // 数据库路径可自定义
+
+        // ========================
+        // 核心功能实现
+        // ========================
+        let isSubmitting = false;
+
+        // 创建单词卡片
+        function createCard(wordData) {
+            const card = document.createElement('div');
+            card.className = 'word-card';
+            card.innerHTML = `
+                <button class="delete-btn" onclick="deleteWord('${wordData.english}')">×</button>
+                <div class="word">${wordData.english}</div>
+                <div class="phonetic">${wordData.phonetic || '暂无音标'}</div>
+                <div class="translation">${wordData.chinese}</div>
+                <div class="pronunciation-btns">
+                    <button onclick="playPronunciation('${wordData.english}', 'UK')">英音发音</button>
+                    <button onclick="playPronunciation('${wordData.english}', 'US')">美音发音</button>
+                </div>
+            `;
+            return card;
+        }
+
+        // 删除单词
+        async function deleteWord(word) {
+            if (!confirm(`确定要删除 "${word}" 吗？`)) return;
+
+            try {
+                const snapshot = await wordsRef.once('value');
+                const words = snapshot.val() || [];
+                const updated = words.filter(w => w.english !== word);
+                await wordsRef.set(updated);
+            } catch (error) {
+                alert('删除失败，请检查网络连接');
+            }
+        }
+
+        // 发音功能
+        function playPronunciation(word, type) {
+            const audio = new Audio(
+                `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`
+            );
+            audio.play().catch(() => alert('播放失败，请点击允许音频权限'));
+        }
+
+        // 实时数据同步
+        wordsRef.on('value', snapshot => {
+            const words = snapshot.val() || [];
+            const container = document.getElementById('cardContainer');
+            container.innerHTML = '';
+            words.forEach(word => {
+                container.appendChild(createCard(word));
+            });
+        });
+
+        // 自动获取翻译和音标
+        let fetchTimeout;
+        document.getElementById('english').addEventListener('input', async function () {
+            clearTimeout(fetchTimeout);
+            const english = this.value.trim();
+            if (!english) return;
+
+            fetchTimeout = setTimeout(async () => {
+                document.getElementById('loading').style.display = 'block';
+                try {
+                    // 并行获取翻译和音标
+                    const [translation, phonetic] = await Promise.all([
+                        fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(english)}&langpair=en|zh-CN`)
+                            .then(r => r.json())
+                            .then(d => d.responseData.translatedText || '翻译失败'),
+
+                        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(english)}`)
+                            .then(r => r.ok ? r.json() : Promise.reject())
+                            .then(d => d[0]?.phonetics[0]?.text?.replace(/[\/]/g, '') || '无音标')
+                            .catch(() => '音标获取失败')
+                    ]);
+
+                    document.getElementById('chinese').value = `${translation} | ${phonetic}`;
+                } catch {
+                    document.getElementById('chinese').value = '数据获取失败';
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }, 500);
+        });
+
+        // 表单提交处理
+        document.getElementById('addWordForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            if (isSubmitting) return;
+
+            const english = document.getElementById('english').value.trim();
+            const [chinese, phonetic] = document.getElementById('chinese').value.split(' | ');
+
+            if (!english || !chinese) {
+                alert('请填写完整信息');
+                return;
+            }
+
+            isSubmitting = true;
+            document.getElementById('submitBtn').disabled = true;
+
+            try {
+                const snapshot = await wordsRef.once('value');
+                const existingWords = snapshot.val() || [];
+
+                // 检查重复
+                if (existingWords.some(w => w.english.toLowerCase() === english.toLowerCase())) {
+                    alert('该单词已存在');
+                    return;
+                }
+
+                // 添加新词
+                const newWord = {
+                    english: english,
+                    chinese: chinese,
+                    phonetic: phonetic || '无音标'
+                };
+
+                await wordsRef.set([...existingWords, newWord]);
+                document.getElementById('addWordForm').reset();
+            } catch (error) {
+                alert('保存失败，请检查网络连接');
+            } finally {
+                isSubmitting = false;
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
