@@ -108,22 +108,16 @@
             }
         });
 
-        // 监听认证状态变化
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                // 用户已登录
-                authContainer.style.display = 'none';
-                addWordForm.style.display = 'block';
-                cardContainer.style.display = 'block';
-                loadWords(); // 加载单词卡片
-            } else {
-                // 用户未登录
-                authContainer.style.display = 'block';
-                addWordForm.style.display = 'none';
-                cardContainer.style.display = 'none';
-                cardContainer.innerHTML = '';
-            }
-        });
+        // 播放有道词典发音
+        function playPronunciation(word, type) {
+            const encodedWord = encodeURIComponent(word);
+            const typeParam = type === 'UK' ? 1 : 2; // 1为英式，2为美式
+            const url = `https://dict.youdao.com/dictvoice?audio=${encodedWord}&type=${typeParam}`;
+            console.log(`播放发音URL: ${url}`); // 调试日志
+
+            const audio = new Audio(url);
+            audio.play().catch(() => alert('播放失败，请点击允许音频权限'));
+        }
 
         // 创建单词卡片
         function createCard(wordData) {
@@ -163,14 +157,6 @@
             } catch (error) {
                 alert('删除失败，请检查网络连接');
             }
-        }
-
-        // 发音功能
-        function playPronunciation(word, type) {
-            const audio = new Audio(
-                `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`
-            );
-            audio.play().catch(() => alert('播放失败，请点击允许音频权限'));
         }
 
         // 实时数据同步
@@ -255,7 +241,7 @@
                 // 添加新词
                 const newWordRef = push(wordsRef);
                 const newWord = {
-                    english: english.toLowerCase(),
+                    english: english, // 保留原始大小写
                     chinese: chinese,
                     phonetic: phonetic || '无音标',
                     uid: currentUser.uid, // 存储用户ID以便删除权限控制
@@ -441,6 +427,12 @@
 
         .auth-toggle:hover {
             color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            .card-container {
+                columns: 1 300px;
+            }
         }
     </style>
 </head>
