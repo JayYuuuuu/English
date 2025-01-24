@@ -15,7 +15,9 @@
             signInWithEmailAndPassword,
             createUserWithEmailAndPassword,
             signOut,
-            onAuthStateChanged
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            signInWithPopup
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
         import {
             getDatabase,
@@ -55,6 +57,7 @@
         const authTitle = document.getElementById('authTitle');
         const authBtn = document.getElementById('authBtn');
         const toggleAuth = document.getElementById('toggleAuth');
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
 
         const addWordForm = document.getElementById('addWordForm');
         const submitBtn = document.getElementById('submitBtn');
@@ -95,6 +98,17 @@
                 } catch (error) {
                     alert(`注册失败: ${error.message}`);
                 }
+            }
+        });
+
+        // Google 登录处理
+        googleSignInBtn.addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+                // 登录成功，由 onAuthStateChanged 处理界面更新
+            } catch (error) {
+                alert(`Google 登录失败: ${error.message}`);
             }
         });
 
@@ -442,6 +456,31 @@
         .auth-toggle:hover {
             color: #0056b3;
         }
+
+        /* Google 登录按钮样式 */
+        .google-btn {
+            background: #db4437;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .google-btn:hover {
+            background: #c33d2e;
+        }
+
+        .google-btn img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
     </style>
 </head>
 
@@ -460,6 +499,10 @@
                 </div>
                 <button type="submit" id="authBtn">登录</button>
             </form>
+            <button class="google-btn" id="googleSignInBtn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
+                使用 Google 登录
+            </button>
             <button class="auth-toggle" id="toggleAuth">没有账号？注册</button>
         </div>
 
