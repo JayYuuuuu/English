@@ -436,7 +436,7 @@
             // 1. 数据 (示例列出全部units，比较长)
             // ======================
             const units = [
-                {
+            {
                     unit: 1,
                     words: [
                         { word: "cottage", pronunciation: "/ˈkɒtɪdʒ/", meaning: "n. （尤指）村舍，小别墅" },
@@ -915,80 +915,20 @@
 
             let currentMode = "english"; // 默认英文模式
 
-            // ========== 语音 ==========
-
-            let voices = [];                  // 存所有可用 voice
-            let voiceMap = new Map();         // 语言 => voice 的映射
-            let currentAccent = "en-US";      // 当前口音(可改成 en-GB)，随时切换
-
-            // 加载声音列表（异步），并把常用的 en-US / en-GB voice 存进 voiceMap
-            function loadVoicesAsync() {
-                return new Promise((resolve) => {
-                    let localVoices = speechSynthesis.getVoices();
-                    if (localVoices.length) {
-                        // 已经拿到 voices
-                        voices = localVoices;
-                        voices.forEach((v) => {
-                            if (v.lang === "en-US") {
-                                voiceMap.set("en-US", v);
-                            }
-                            if (v.lang === "en-GB") {
-                                voiceMap.set("en-GB", v);
-                            }
-                        });
-                        resolve(voices);
-                    } else {
-                        // 如果暂时为空，等事件回调
-                        speechSynthesis.onvoiceschanged = () => {
-                            localVoices = speechSynthesis.getVoices();
-                            voices = localVoices;
-                            voices.forEach((v) => {
-                                if (v.lang === "en-US") {
-                                    voiceMap.set("en-US", v);
-                                }
-                                if (v.lang === "en-GB") {
-                                    voiceMap.set("en-GB", v);
-                                }
-                            });
-                            resolve(localVoices);
-                        };
-                    }
+            /*
+             * 播放有道词典发音
+             * @param {string} word - 要播放的单词
+             * @param {number} type - 发音类型，1为英式，2为美式
+             */
+            function playYoudaoAudio(word, type) {
+                const encodedWord = encodeURIComponent(word);
+                const url = `https://dict.youdao.com/dictvoice?audio=${encodedWord}&type=${type}`;
+                const audio = new Audio(url);
+                audio.play().catch(error => {
+                    console.error("无法播放音频:", error);
+                    alert("无法播放发音音频。");
                 });
             }
-
-            /*
-             * 朗读文本
-             * @param {string} englishWord - 要朗读的英语单词
-             */
-            async function speakText(englishWord) {
-                if (!("speechSynthesis" in window)) {
-                    alert("抱歉，当前浏览器不支持朗读功能。");
-                    return;
-                }
-
-                // 如果还没加载过语音，就先加载
-                if (voices.length === 0) {
-                    await loadVoicesAsync();
-                }
-
-                // 取消当前正在朗读的
-                window.speechSynthesis.cancel();
-
-                const utterance = new SpeechSynthesisUtterance(englishWord);
-                utterance.lang = currentAccent; // 根据全局 currentAccent 设置语言
-
-                // 找到对应语言的 voice
-                const selectedVoice = voiceMap.get(currentAccent);
-                if (selectedVoice) {
-                    utterance.voice = selectedVoice;
-                }
-
-                // 开始朗读
-                window.speechSynthesis.speak(utterance);
-            }
-
-            // 立即触发一次异步加载语音
-            loadVoicesAsync();
 
             // ========== 创建卡片函数 ==========
             function createFlipCard(wordObj, unitClass, unitNumber) {
@@ -1034,8 +974,7 @@
                 speakButtonGB.classList.add("speak-btn");
                 speakButtonGB.onclick = (e) => {
                     e.stopPropagation();
-                    currentAccent = "en-GB";      // 切成英式
-                    speakText(wordObj.word);      // 用新函数朗读
+                    playYoudaoAudio(wordObj.word, 1); // 英式发音
                 };
 
                 const speakButtonUS = document.createElement("button");
@@ -1043,8 +982,7 @@
                 speakButtonUS.classList.add("speak-btn");
                 speakButtonUS.onclick = (e) => {
                     e.stopPropagation();
-                    currentAccent = "en-US";      // 切成美式
-                    speakText(wordObj.word);
+                    playYoudaoAudio(wordObj.word, 2); // 美式发音
                 };
 
                 buttonRowFront.appendChild(speakButtonGB);
@@ -1185,7 +1123,7 @@
                         speakButtonGB.classList.add("speak-btn");
                         speakButtonGB.onclick = (e) => {
                             e.stopPropagation();
-                            speakWord(word, "en-GB");
+                            playYoudaoAudio(word, 1); // 英式发音
                         };
 
                         const speakButtonUS = document.createElement("button");
@@ -1193,7 +1131,7 @@
                         speakButtonUS.classList.add("speak-btn");
                         speakButtonUS.onclick = (e) => {
                             e.stopPropagation();
-                            speakWord(word, "en-US");
+                            playYoudaoAudio(word, 2); // 美式发音
                         };
 
                         buttonRowFront.appendChild(speakButtonGB);
@@ -1242,8 +1180,32 @@
                         pronEl.classList.add("pronunciation");
                         pronEl.textContent = pronunciation;
 
+                        // 两个发音按钮
+                        const buttonRowBack = document.createElement("div");
+                        buttonRowBack.classList.add("button-row");
+
+                        const speakButtonGB = document.createElement("button");
+                        speakButtonGB.textContent = "英式";
+                        speakButtonGB.classList.add("speak-btn");
+                        speakButtonGB.onclick = (e) => {
+                            e.stopPropagation();
+                            playYoudaoAudio(word, 1); // 英式发音
+                        };
+
+                        const speakButtonUS = document.createElement("button");
+                        speakButtonUS.textContent = "美式";
+                        speakButtonUS.classList.add("speak-btn");
+                        speakButtonUS.onclick = (e) => {
+                            e.stopPropagation();
+                            playYoudaoAudio(word, 2); // 美式发音
+                        };
+
+                        buttonRowBack.appendChild(speakButtonGB);
+                        buttonRowBack.appendChild(speakButtonUS);
+
                         back.appendChild(wordEl);
                         back.appendChild(pronEl);
+                        back.appendChild(buttonRowBack);
 
                         // 英文那面按钮可选加上，也可不加
                         back.style.display = "block"; // 或者你也可以加别的布局
