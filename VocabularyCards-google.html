@@ -6,17 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>云端单词卡片</title>
 
-    <!-- FirebaseUI CSS -->
+    <!-- FirebaseUI 依赖 -->
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
     <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
 
-    <!-- Firebase SDK (模块化) -->
+    <!-- Firebase SDK -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
+        // Firebase 初始化
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import {
             getAuth,
             signOut,
-            onAuthStateChanged
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            EmailAuthProvider,
+            PhoneAuthProvider
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
         import {
             getDatabase,
@@ -32,7 +36,7 @@
             set
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
-        // TODO: 替换为您自己的 Firebase 配置
+        // 配置你的 Firebase 项目信息
         const firebaseConfig = {
             apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
             authDomain: "vocabularycards-3447d.firebaseapp.com",
@@ -44,46 +48,76 @@
             measurementId: "G-ZML5070YJ6"
         };
 
-        // 初始化 Firebase
+        // 初始化 Firebase 服务
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        window.auth = auth; // 使 auth 可在全局访问
         const database = getDatabase(app);
-        const wordsRef = ref(database, 'VocabularyCards'); // 数据库路径可自定义
+        const wordsRef = ref(database, 'VocabularyCards');
 
-        // 获取页面元素
+        // 页面元素引用
+        const authContainer = document.getElementById('authContainer');
         const addWordForm = document.getElementById('addWordForm');
-        const submitBtn = document.getElementById('submitBtn');
+        const cardContainer = document.getElementById('cardContainer');
         const logoutBtn = document.getElementById('logoutBtn');
 
-        const cardContainer = document.getElementById('cardContainer');
+        // FirebaseUI 配置
+        const uiConfig = {
+            signInFlow: 'popup',
+            signInSuccessUrl: '/',
+            signInOptions: [
+                {
+                    provider: GoogleAuthProvider.PROVIDER_ID,
+                    customParameters: { prompt: 'select_account' }
+                },
+                {
+                    provider: EmailAuthProvider.PROVIDER_ID,
+                    requireDisplayName: false
+                },
+                {
+                    provider: PhoneAuthProvider.PROVIDER_ID,
+                    recaptchaParameters: { size: "invisible" },
+                    defaultCountry: 'CN'
+                }
+            ],
+            callbacks: {
+                signInSuccessWithAuthResult: () => {
+                    authContainer.style.display = 'none';
+                    return false;
+                },
+                uiShown: () => {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            },
+            tosUrl: '/terms',
+            privacyPolicyUrl: '/privacy'
+        };
 
-        let isSubmitting = false;
+        // 初始化 FirebaseUI
+        const ui = new firebaseui.auth.AuthUI(auth);
+        document.getElementById('loading').style.display = 'block';
+        ui.start('#firebaseui-auth-container', uiConfig);
+
+        // 认证状态监听
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                addWordForm.style.display = 'block';
+                cardContainer.style.display = 'block';
+                loadWords();
+            } else {
+                addWordForm.style.display = 'none';
+                cardContainer.style.display = 'none';
+                cardContainer.innerHTML = '';
+                authContainer.style.display = 'block';
+            }
+        });
 
         // 退出登录处理
         logoutBtn.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                // 退出登录成功，由 onAuthStateChanged 处理界面更新
+                ui.reset();
             } catch (error) {
-                alert(`退出登录失败: ${error.message}`);
-            }
-        });
-
-        // 监听认证状态变化
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                // 用户已登录
-                document.getElementById('firebaseui-auth-container').style.display = 'none';
-                addWordForm.style.display = 'block';
-                cardContainer.style.display = 'block';
-                loadWords(); // 加载单词卡片
-            } else {
-                // 用户未登录
-                document.getElementById('firebaseui-auth-container').style.display = 'block';
-                addWordForm.style.display = 'none';
-                cardContainer.style.display = 'none';
-                cardContainer.innerHTML = '';
+                alert(`退出失败: ${error.message}`);
             }
         });
 
@@ -94,7 +128,7 @@
             card.innerHTML = `
                 <button class="delete-btn" onclick="deleteWord('${wordData.key}', '${wordData.uid}')">×</button>
                 <div class="word">${wordData.english}</div>
-                <div class="phonetic">${wordData.phonetic || '暂无音标'}</div>
+                <div class="phonetic">${wordData.phonetic || '无音标'}</div>
                 <div class="translation">${wordData.chinese}</div>
                 <div class="pronunciation-btns">
                     <button onclick="playPronunciation('${wordData.english}', 'UK')">英音发音</button>
@@ -104,56 +138,52 @@
             return card;
         }
 
-        // 删除单词
-        async function deleteWord(cardId, uid) {
-            const currentUser = auth.currentUser;
-            if (!currentUser) {
-                alert('请先登录');
+        // 删除单词功能
+        window.deleteWord = async (cardId, uid) => {
+            const user = auth.currentUser;
+            if (!user || user.uid !== uid) {
+                alert('操作未授权');
                 return;
             }
 
-            if (uid !== currentUser.uid) {
-                alert('您没有权限删除这个单词');
-                return;
-            }
-
-            if (!confirm(`确定要删除这个单词吗？`)) return;
+            if (!confirm('确认删除？')) return;
 
             try {
                 const wordRef = ref(database, `VocabularyCards/${cardId}`);
                 await remove(wordRef);
             } catch (error) {
-                alert('删除失败，请检查网络连接');
+                alert('删除失败: ' + error.message);
             }
-        }
+        };
 
         // 发音功能
-        function playPronunciation(word, type) {
-            const audio = new Audio(
-                `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`
-            );
-            audio.play().catch(() => alert('播放失败，请点击允许音频权限'));
-        }
+        window.playPronunciation = (word, type) => {
+            new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${type === 'UK' ? 1 : 2}`)
+                .play()
+                .catch(() => alert('请允许音频播放权限'));
+        };
 
-        // 实时数据同步
+        // 加载单词数据
         function loadWords() {
             const wordsQuery = query(wordsRef, orderByChild('timestamp'));
-            onValue(wordsQuery, snapshot => {
-                const wordsData = snapshot.val() || {};
-                const container = document.getElementById('cardContainer');
-                container.innerHTML = '';
-                Object.keys(wordsData).forEach(key => {
-                    const word = wordsData[key];
-                    container.appendChild(createCard({ ...word, key }));
+            onValue(wordsQuery, (snapshot) => {
+                cardContainer.innerHTML = '';
+                snapshot.forEach((childSnapshot) => {
+                    const wordData = childSnapshot.val();
+                    cardContainer.appendChild(createCard({
+                        ...wordData,
+                        key: childSnapshot.key
+                    }));
                 });
             });
         }
 
-        // 自动获取翻译和音标
+        // 自动翻译功能
         let fetchTimeout;
-        document.getElementById('english').addEventListener('input', async function () {
+        document.getElementById('english').addEventListener('input', function() {
             clearTimeout(fetchTimeout);
             const english = this.value.trim();
+            
             if (!english) {
                 document.getElementById('chinese').value = '';
                 return;
@@ -162,19 +192,18 @@
             fetchTimeout = setTimeout(async () => {
                 document.getElementById('loading').style.display = 'block';
                 try {
-                    // 并行获取翻译和音标
-                    const [translation, phonetic] = await Promise.all([
-                        fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(english)}&langpair=en|zh-CN`)
-                            .then(r => r.json())
-                            .then(d => d.responseData.translatedText || '翻译失败'),
-
+                    const [transRes, dictRes] = await Promise.all([
+                        fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(english)}&langpair=en|zh-CN`),
                         fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(english)}`)
-                            .then(r => r.ok ? r.json() : Promise.reject())
-                            .then(d => d[0]?.phonetics[0]?.text?.replace(/[\/]/g, '') || '无音标')
-                            .catch(() => '音标获取失败')
                     ]);
 
-                    document.getElementById('chinese').value = `${translation} | ${phonetic}`;
+                    const translation = await transRes.json();
+                    const dictData = await dictRes.json().catch(() => null);
+
+                    document.getElementById('chinese').value = [
+                        translation.responseData?.translatedText || '无翻译',
+                        dictData?.[0]?.phonetics?.[0]?.text || '无音标'
+                    ].join(' | ');
                 } catch {
                     document.getElementById('chinese').value = '数据获取失败';
                 } finally {
@@ -183,66 +212,51 @@
             }, 500);
         });
 
-        // 表单提交处理
-        addWordForm.addEventListener('submit', async e => {
+        // 提交新单词
+        addWordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (isSubmitting) return;
-
-            const english = document.getElementById('english').value.trim();
+            
+            const english = document.getElementById('english').value.trim().toLowerCase();
             const [chinese, phonetic] = document.getElementById('chinese').value.split(' | ');
-
+            
             if (!english || !chinese) {
                 alert('请填写完整信息');
                 return;
             }
 
-            isSubmitting = true;
+            const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
 
             try {
-                const currentUser = auth.currentUser;
-                if (!currentUser) {
-                    alert('请先登录');
-                    return;
-                }
-
-                // 检查是否存在重复单词（忽略大小写）
-                const duplicateQuery = query(wordsRef, orderByChild('english'), equalTo(english.toLowerCase()));
+                // 检查重复单词
+                const duplicateQuery = query(wordsRef, orderByChild('english'), equalTo(english));
                 const snapshot = await get(duplicateQuery);
                 if (snapshot.exists()) {
-                    alert('该单词已存在');
+                    alert('单词已存在');
                     return;
                 }
 
-                // 添加新词
+                // 保存新单词
                 const newWordRef = push(wordsRef);
-                const newWord = {
-                    english: english.toLowerCase(),
+                await set(newWordRef, {
+                    english: english,
                     chinese: chinese,
-                    phonetic: phonetic || '无音标',
-                    uid: currentUser.uid, // 存储用户ID以便删除权限控制
+                    phonetic: phonetic || '',
+                    uid: auth.currentUser.uid,
                     timestamp: serverTimestamp()
-                };
+                });
 
-                await set(newWordRef, newWord);
                 addWordForm.reset();
             } catch (error) {
-                console.error(error);
-                alert('保存失败，请检查网络连接');
+                alert('保存失败: ' + error.message);
             } finally {
-                isSubmitting = false;
                 submitBtn.disabled = false;
             }
         });
-
-        // 允许在全局范围内访问 deleteWord 函数
-        window.deleteWord = deleteWord;
     </script>
 
-    <!-- FirebaseUI JS -->
-    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
-
     <style>
+        /* 基础样式 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -250,9 +264,9 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 20px;
-            background-color: #f5f5f5;
+            background: #f0f2f5;
         }
 
         .container {
@@ -260,61 +274,64 @@
             margin: 0 auto;
         }
 
-        .auth-container,
-        .add-word-form,
-        .card-container {
+        /* 认证容器 */
+        #authContainer {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 25px;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
         }
 
-        .add-word-form h2 {
-            margin-bottom: 15px;
+        #firebaseui-auth-container {
+            margin: 1rem 0;
+        }
+
+        .firebaseui-idp-button {
+            border-radius: 8px !important;
+            margin: 0.5rem 0 !important;
+        }
+
+        /* 添加单词表单 */
+        #addWordForm {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
         }
 
         .input-group {
-            margin-bottom: 15px;
-            position: relative;
+            margin-bottom: 1.5rem;
         }
 
-        input[type="text"],
-        input[type="email"],
-        input[type="password"] {
+        input[type="text"] {
             width: 100%;
             padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 16px;
+            transition: border-color 0.3s;
         }
 
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
+        input[type="text"]:focus {
+            border-color: #2196F3;
+            outline: none;
         }
 
-        button:hover {
-            background: #0056b3;
-        }
-
-        .card-container {
-            columns: 2 300px;
-            gap: 15px;
+        /* 单词卡片 */
+        #cardContainer {
+            columns: 2;
+            gap: 1rem;
         }
 
         .word-card {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             break-inside: avoid;
             position: relative;
         }
@@ -323,165 +340,96 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            background: #dc3545;
+            background: #ff4444;
             color: white;
             border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 6px;
             cursor: pointer;
             transition: background 0.3s;
         }
 
         .delete-btn:hover {
-            background: #c82333;
+            background: #cc0000;
         }
 
         .word {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 8px;
+            font-size: 1.5rem;
+            color: #1a237e;
+            margin-bottom: 0.5rem;
         }
 
         .phonetic {
             color: #666;
-            font-size: 16px;
-            margin-bottom: 12px;
+            font-style: italic;
+            margin-bottom: 1rem;
         }
 
         .translation {
-            color: #444;
-            font-size: 18px;
-            margin-bottom: 15px;
+            color: #2e7d32;
+            font-size: 1.1rem;
         }
 
-        .pronunciation-btns {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .pronunciation-btns button {
-            flex: 1;
-            background: #28a745;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.3s;
+        /* 按钮样式 */
+        button {
+            background: #2196F3;
             color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0.5rem;
         }
 
-        .pronunciation-btns button:hover {
-            background: #1e7e34;
+        button:hover {
+            background: #1976D2;
+            transform: translateY(-1px);
         }
 
+        #logoutBtn {
+            background: #666;
+        }
+
+        #logoutBtn:hover {
+            background: #444;
+        }
+
+        /* 加载提示 */
         #loading {
-            display: none;
             color: #666;
-            position: absolute;
-            right: 15px;
-            bottom: 15px;
-        }
-
-        .logout-btn {
-            background: #6c757d;
-            margin-left: 10px;
-        }
-
-        .logout-btn:hover {
-            background: #5a6268;
-        }
-
-        /* FirebaseUI 自定义样式（可选） */
-        #firebaseui-auth-container {
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        #loader {
-            color: #666;
-            text-align: center;
-            margin-top: 20px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <!-- 登录界面 -->
+        <div id="authContainer">
+            <h2>欢迎使用智能单词卡</h2>
+            <div id="firebaseui-auth-container"></div>
+            <div id="loading">正在加载登录选项...</div>
+        </div>
 
-        <!-- FirebaseUI 登录界面 -->
-        <div id="firebaseui-auth-container"></div>
-        <div id="loader">加载中...</div>
-
-        <!-- 添加单词区域 -->
-        <form class="add-word-form" id="addWordForm" style="display: none;">
+        <!-- 添加单词表单 -->
+        <form id="addWordForm" style="display: none;">
             <h2>添加新单词</h2>
             <div class="input-group">
                 <input type="text" id="english" placeholder="输入英文单词" required>
-                <div id="loading">加载中...</div>
+                <div id="loading">获取数据中...</div>
             </div>
             <div class="input-group">
-                <input type="text" id="chinese" placeholder="中文释义" readonly>
+                <input type="text" id="chinese" placeholder="自动获取翻译和音标" readonly>
             </div>
             <button type="submit" id="submitBtn">添加单词</button>
-            <button type="button" id="logoutBtn" class="logout-btn">退出登录</button>
+            <button type="button" id="logoutBtn">退出登录</button>
         </form>
 
-        <!-- 单词卡片展示区域 -->
-        <div class="card-container" id="cardContainer" style="display: none;">
-            <!-- 单词卡片将动态插入这里 -->
-        </div>
+        <!-- 单词展示区 -->
+        <div id="cardContainer" style="display: none;"></div>
     </div>
-
-    <!-- Initialize FirebaseUI -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // 确保 auth 已初始化
-            if (!window.auth) {
-                console.error('Firebase auth 未初始化。');
-                return;
-            }
-
-            // 初始化 FirebaseUI Widget 使用 Firebase.
-            const ui = new firebaseui.auth.AuthUI(window.auth);
-
-            // FirebaseUI 配置
-            const uiConfig = {
-                callbacks: {
-                    signInSuccessWithAuthResult: function (authResult, redirectUrl) {
-                        // 用户成功登录后是否重定向
-                        // 返回 true 将自动重定向到 signInSuccessUrl
-                        return true;
-                    },
-                    uiShown: function () {
-                        // 登录界面渲染完毕后隐藏加载器
-                        document.getElementById('loader').style.display = 'none';
-                    }
-                },
-                // 使用弹窗方式而不是重定向
-                signInFlow: 'popup',
-                // 登录成功后重定向的 URL
-                signInSuccessUrl: window.location.href, // 重定向回当前页面
-                signInOptions: [
-                    // 列出您希望支持的登录提供者
-                    firebaseui.auth.GoogleAuthProvider.PROVIDER_ID,
-                    firebaseui.auth.FacebookAuthProvider.PROVIDER_ID,
-                    firebaseui.auth.TwitterAuthProvider.PROVIDER_ID,
-                    firebaseui.auth.GithubAuthProvider.PROVIDER_ID,
-                    firebaseui.auth.EmailAuthProvider.PROVIDER_ID,
-                    firebaseui.auth.PhoneAuthProvider.PROVIDER_ID
-                ],
-                // 服务条款 URL（请替换为您的实际 URL）
-                tosUrl: 'https://www.example.com/terms-of-service',
-                // 隐私政策 URL（请替换为您的实际 URL）
-                privacyPolicyUrl: 'https://www.example.com/privacy-policy'
-            };
-
-            // 启动 FirebaseUI
-            ui.start('#firebaseui-auth-container', uiConfig);
-        });
-    </script>
 </body>
 
 </html>
