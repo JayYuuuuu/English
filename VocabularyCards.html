@@ -15,11 +15,7 @@
             signInWithEmailAndPassword,
             createUserWithEmailAndPassword,
             signOut,
-            onAuthStateChanged,
-            GoogleAuthProvider,
-            signInWithPopup,
-            signInWithRedirect,
-            getRedirectResult
+            onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
         import {
             getDatabase,
@@ -35,13 +31,13 @@
             set
         } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
-        // 替换为您自己的 Firebase 配置
+        // TODO: 替换为您自己的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyA8LY7Ik0WC1KqlEYTbKvv1KRQsjDzMX-I",
             authDomain: "vocabularycards-3447d.firebaseapp.com",
             databaseURL: "https://vocabularycards-3447d-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "vocabularycards-3447d",
-            storageBucket: "vocabularycards-3447d.firebasestorage.app",
+            storageBucket: "vocabularycards-3447d.appspot.com",
             messagingSenderId: "449077574534",
             appId: "1:449077574534:web:75ca12e415aa8107d34a07",
             measurementId: "G-ZML5070YJ6"
@@ -59,7 +55,6 @@
         const authTitle = document.getElementById('authTitle');
         const authBtn = document.getElementById('authBtn');
         const toggleAuth = document.getElementById('toggleAuth');
-        const googleSignInBtn = document.getElementById('googleSignInBtn');
 
         const addWordForm = document.getElementById('addWordForm');
         const submitBtn = document.getElementById('submitBtn');
@@ -69,9 +64,6 @@
 
         let isSubmitting = false;
         let isLogin = true; // 标记当前是登录还是注册
-
-        // 初始化 GoogleAuthProvider
-        const provider = new GoogleAuthProvider();
 
         // 切换登录/注册模式
         toggleAuth.addEventListener('click', () => {
@@ -102,22 +94,6 @@
                     // 注册成功，由 onAuthStateChanged 处理界面更新
                 } catch (error) {
                     alert(`注册失败: ${error.message}`);
-                }
-            }
-        });
-
-        // Google 登录处理
-        googleSignInBtn.addEventListener('click', async () => {
-            try {
-                await signInWithPopup(auth, provider);
-                // 登录成功，由 onAuthStateChanged 处理界面更新
-            } catch (error) {
-                if (error.code === 'auth/popup-closed-by-user') {
-                    alert('认证弹出窗口被关闭，请重试。');
-                } else {
-                    console.error("Google 登录错误代码:", error.code);
-                    console.error("错误详细信息:", error.message);
-                    alert(`Google 登录失败: ${error.message}`);
                 }
             }
         });
@@ -466,31 +442,6 @@
         .auth-toggle:hover {
             color: #0056b3;
         }
-
-        /* Google 登录按钮样式 */
-        .google-btn {
-            background: #db4437;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .google-btn:hover {
-            background: #c33d2e;
-        }
-
-        .google-btn img {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-        }
     </style>
 </head>
 
@@ -509,10 +460,6 @@
                 </div>
                 <button type="submit" id="authBtn">登录</button>
             </form>
-            <button class="google-btn" id="googleSignInBtn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
-                使用 Google 登录
-            </button>
             <button class="auth-toggle" id="toggleAuth">没有账号？注册</button>
         </div>
 
